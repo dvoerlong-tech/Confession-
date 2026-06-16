@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confession Box</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root { --primary: #ff4b5c; --bg: #fff5f6; --text: #333; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg); color: var(--text);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
+        }
+        .card {
+            background: white; padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(255, 75, 92, 0.1);
+            width: 100%; max-width: 400px; text-align: center;
+        }
+        h2 { color: var(--primary); margin-bottom: 20px; }
+        input, select, textarea {
+            width: 100%; padding: 12px; margin: 10px 0;
+            border: 2px solid #ffd2d7; border-radius: 10px;
+            box-sizing: border-box; font-size: 16px; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        button {
+            background: var(--primary); color: white; border: none;
+            padding: 12px 20px; border-radius: 10px; cursor: pointer;
+            font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div id="registerView">
+            <h2>Create Your Profile</h2>
+            <input type="text" id="username" placeholder="Your Name" required>
+            <input type="text" id="userclass" placeholder="Class / Section" required>
+            <select id="usergender">
+                <option value="" disabled selected>Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+            <button onclick="saveProfile()">Create Profile</button>
+        </div>
+
+        <div id="confessionView" class="hidden">
+            <h2>Express Your Feelings ❤️</h2>
+            <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
+            <button onclick="sendConfession()">Send Confession Live 🚀</button>
+            <p id="sendLabel" style="margin-top:10px; font-weight:bold; color: #ff4b5c;"></p>
+        </div>
+    </div>
+
+    <script>
+        // 🔴 PASTE YOUR SUPABASE CREDENTIALS HERE
+        const SUPABASE_URL = "https://gsckseffapurzqkexeup.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
+        
+        let supabaseClient; // We will load this only when needed so it doesn't crash the page
+
+        // 1. Check if profile exists on page load
+        window.onload = function() {
+            if (localStorage.getItem('sb_name')) {
+                showConfessionPage();
+            }
+        };
+
+        // 2. Save profile (This will now work flawlessly)
+        function saveProfile() {
+            const name = document.getElementById('username').value.trim();
+            const uClass = document.getElementById('userclass').value.trim();
+            const gender = document.getElementById('usergender').value;
+
+            if (!name || !uClass || !gender) {
+                alert('Please fill out all fields!');
+                return;
+            }
+
+            localStorage.setItem('sb_name', name);
+            localStorage.setItem('sb_class', uClass);
+            localStorage.setItem('sb_gender', gender);
+            
+            showConfessionPage();
+        }
+
+        // 3. Switch screen
+        function showConfessionPage() {
+            document.getElementById('registerView').classList.add('hidden');
+            document.getElementById('confessionView').classList.remove('hidden');
+        }
+
+        // 4. Send Message to Cloud
+        async function sendConfession() {
+            const msg = document.getElementById('confessionMessage').value.trim();
+            const label = document.getElementById('sendLabel');
+
+            if(!msg) {
+                alert("Type a message before sending!");
+                return;
+            }
+
+            // Safety check so you don't forget to paste your keys
+            if(SUPABASE_URL.includes("YOUR_SUPABASE")) {
+                alert("HOST ERROR: You need to paste your Supabase URL and Key in the code first!");
+                return;
+            }
+
+            label.style.color = "#ff9800";
+            label.innerText = "Sending to database cloud...";
+
+            // Connect to database only at the moment of sending
+            if(!supabaseClient) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+
+            // Push data
+            const { data, error } = await supabaseClient
+                .from('confessions')
+                .insert([
+                    { 
+                        name: localStorage.getItem('sb_name'), 
+                        class: localStorage.getItem('sb_class'), 
+                        gender: localStorage.getItem('sb_gender'), 
+                        message: msg 
+                    }
+                ]);
+
+            if (error) {
+                label.style.color = "red";
+                label.innerText = "Error: Couldn't drop message.";
+                console.error(error);
+            } else {
+                label.style.color = "#00e676";
+                label.innerText = "Sent Successfully! 🚀";
+                document.getElementById('confessionMessage').value = "";
+                setTimeout(() => { label.innerText = ""; }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
