@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confession Box</title>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -38,112 +38,120 @@
 </head>
 <body>
 
-    <div class="card">
-        <div id="registerView">
-            <h2>Create Your Profile</h2>
-            <input type="text" id="username" placeholder="Your Name" required>
-            <input type="text" id="userclass" placeholder="Class / Section" required>
-            <select id="usergender">
-                <option value="" disabled selected>Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-            <button onclick="saveProfile()">Create Profile</button>
-        </div>
-
-        <div id="confessionView" class="hidden">
-            <h2>Express Your Feelings ❤️</h2>
-            <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
-            <button onclick="sendConfession()">Send Confession Live 🚀</button>
-            <p id="sendLabel" style="margin-top:10px; font-weight:bold; color: #ff4b5c;"></p>
-        </div>
+<div class="card">
+    <div id="registerView">
+        <h2>Create Your Profile</h2>
+        <input type="text" id="username" placeholder="Your Name" required>
+        <input type="text" id="userclass" placeholder="Class / Section" required>
+        <select id="usergender">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <button onclick="saveProfile()">Create Profile</button>
     </div>
 
-    <script>
-        // 🔴 PASTE YOUR SUPABASE CREDENTIALS HERE
-        const SUPABASE_URL = "https://gsckseffapurzqkexeup.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
-        
-        let supabaseClient; // We will load this only when needed so it doesn't crash the page
+    <div id="confessionView" class="hidden">
+        <h2>Express Your Feelings ❤️</h2>
+        <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
+        <button onclick="sendConfession()">Send Confession Live 🚀</button>
+        <p id="sendLabel" style="margin-top:10px; font-weight:bold; color: #ff4b5c;"></p>
+    </div>
+</div>
 
-        // 1. Check if profile exists on page load
-        window.onload = function() {
-            if (localStorage.getItem('sb_name')) {
-                showConfessionPage();
-            }
-        };
+<script>
+const SUPABASE_URL = "https://gsckseffapurzqkexeup.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
 
-        // 2. Save profile (This will now work flawlessly)
-        function saveProfile() {
-            const name = document.getElementById('username').value.trim();
-            const uClass = document.getElementById('userclass').value.trim();
-            const gender = document.getElementById('usergender').value;
+let supabaseClient;
 
-            if (!name || !uClass || !gender) {
-                alert('Please fill out all fields!');
-                return;
-            }
+window.onload = function() {
+    if (localStorage.getItem('sb_name')) {
+        showConfessionPage();
+    }
+};
 
-            localStorage.setItem('sb_name', name);
-            localStorage.setItem('sb_class', uClass);
-            localStorage.setItem('sb_gender', gender);
-            
-            showConfessionPage();
+function saveProfile() {
+    const name = document.getElementById('username').value.trim();
+    const uClass = document.getElementById('userclass').value.trim();
+    const gender = document.getElementById('usergender').value;
+
+    if (!name || !uClass || !gender) {
+        alert('Please fill out all fields!');
+        return;
+    }
+
+    localStorage.setItem('sb_name', name);
+    localStorage.setItem('sb_class', uClass);
+    localStorage.setItem('sb_gender', gender);
+    
+    showConfessionPage();
+}
+
+function showConfessionPage() {
+    document.getElementById('registerView').classList.add('hidden');
+    document.getElementById('confessionView').classList.remove('hidden');
+}
+
+async function sendConfession() {
+    const msg = document.getElementById('confessionMessage').value.trim();
+    const label = document.getElementById('sendLabel');
+
+    // 🔴 banned words
+    const bannedWords = [
+        "fuck","ass","beta","beti","randi","chod","chut","lund","gand","sex","bitch","slut"
+    ];
+
+    if (!msg) {
+        alert("Type a message before sending!");
+        return;
+    }
+
+    // 🔍 filter check
+    const lowerMsg = msg.toLowerCase();
+    for (let word of bannedWords) {
+        if (lowerMsg.includes(word)) {
+            label.style.color = "red";
+            label.innerText = "bhai confess karna hai to karo nahi to gali mat do";
+            return;
         }
+    }
 
-        // 3. Switch screen
-        function showConfessionPage() {
-            document.getElementById('registerView').classList.add('hidden');
-            document.getElementById('confessionView').classList.remove('hidden');
-        }
+    if(SUPABASE_URL.includes("YOUR_SUPABASE")) {
+        alert("HOST ERROR: You need to paste your Supabase URL and Key in the code first!");
+        return;
+    }
 
-        // 4. Send Message to Cloud
-        async function sendConfession() {
-            const msg = document.getElementById('confessionMessage').value.trim();
-            const label = document.getElementById('sendLabel');
+    label.style.color = "#ff9800";
+    label.innerText = "Sending to database cloud...";
 
-            if(!msg) {
-                alert("Type a message before sending!");
-                return;
+    if(!supabaseClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    const { data, error } = await supabaseClient
+        .from('confessions')
+        .insert([
+            { 
+                name: localStorage.getItem('sb_name'), 
+                class: localStorage.getItem('sb_class'), 
+                gender: localStorage.getItem('sb_gender'), 
+                message: msg 
             }
+        ]);
 
-            // Safety check so you don't forget to paste your keys
-            if(SUPABASE_URL.includes("YOUR_SUPABASE")) {
-                alert("HOST ERROR: You need to paste your Supabase URL and Key in the code first!");
-                return;
-            }
+    if (error) {
+        label.style.color = "red";
+        label.innerText = "Error: Couldn't drop message.";
+        console.error(error);
+    } else {
+        label.style.color = "#00e676";
+        label.innerText = "Sent Successfully! 🚀";
+        document.getElementById('confessionMessage').value = "";
+        setTimeout(() => { label.innerText = ""; }, 3000);
+    }
+}
+</script>
 
-            label.style.color = "#ff9800";
-            label.innerText = "Sending to database cloud...";
-
-            // Connect to database only at the moment of sending
-            if(!supabaseClient) {
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-
-            // Push data
-            const { data, error } = await supabaseClient
-                .from('confessions')
-                .insert([
-                    { 
-                        name: localStorage.getItem('sb_name'), 
-                        class: localStorage.getItem('sb_class'), 
-                        gender: localStorage.getItem('sb_gender'), 
-                        message: msg 
-                    }
-                ]);
-
-            if (error) {
-                label.style.color = "red";
-                label.innerText = "Error: Couldn't drop message.";
-                console.error(error);
-            } else {
-                label.style.color = "#00e676";
-                label.innerText = "Sent Successfully! 🚀";
-                document.getElementById('confessionMessage').value = "";
-                setTimeout(() => { label.innerText = ""; }, 3000);
-            }
-        }
-    </script>
 </body>
 </html>
