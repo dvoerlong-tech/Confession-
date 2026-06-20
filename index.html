@@ -1,62 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confession Box</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confession Box</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        :root { --primary: #ff4b5c; --bg: #fff5f6; --text: #333; }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg); color: var(--text);
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
-        }
-        .card {
-            background: white; padding: 30px; border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(255, 75, 92, 0.1);
-            width: 100%; max-width: 400px; text-align: center;
-        }
-        h2 { color: var(--primary); margin-bottom: 20px; }
-        input, select, textarea {
-            width: 100%; padding: 12px; margin: 10px 0;
-            border: 2px solid #ffd2d7; border-radius: 10px;
-            box-sizing: border-box; font-size: 16px; outline: none;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-        button {
-            background: var(--primary); color: white; border: none;
-            padding: 12px 20px; border-radius: 10px; cursor: pointer;
-            font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s;
-        }
-        button:hover { opacity: 0.9; }
-        .hidden { display: none; }
-    </style>
+<style>
+:root { --primary: #ff4b5c; --bg: #fff5f6; --text: #333; }
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--bg); color: var(--text);
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; margin: 0; padding: 20px;
+}
+
+/* SETTINGS BUTTON */
+.settings-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 22px;
+    cursor: pointer;
+    display: none;
+}
+
+/* SETTINGS PANEL */
+.settings-panel {
+    position: absolute;
+    top: 50px;
+    left: 15px;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    width: 220px;
+    display: none;
+    text-align: left;
+}
+
+.settings-panel input, .settings-panel select {
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+}
+
+/* CARD */
+.card {
+    background: white; padding: 30px; border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(255, 75, 92, 0.1);
+    width: 100%; max-width: 400px; text-align: center;
+}
+
+h2 { color: var(--primary); }
+
+input, select, textarea {
+    width: 100%; padding: 12px; margin: 10px 0;
+    border: 2px solid #ffd2d7; border-radius: 10px;
+    font-size: 16px;
+}
+
+button {
+    background: var(--primary); color: white;
+    padding: 12px; border: none;
+    border-radius: 10px; width: 100%;
+}
+
+.hidden { display: none; }
+</style>
 </head>
+
 <body>
 
-<div class="card">
-    <div id="registerView">
-        <h2>Create Your Profile</h2>
-        <input type="text" id="username" placeholder="Your Name" required>
-        <input type="text" id="userclass" placeholder="Class / Section" required>
-        <select id="usergender">
-            <option value="" disabled selected>Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select>
-        <button onclick="saveProfile()">Create Profile</button>
-    </div>
+<div class="settings-btn" onclick="toggleSettings()">⚙</div>
 
-    <div id="confessionView" class="hidden">
-        <h2>Express Your Feelings ❤️</h2>
-        <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
-        <button onclick="sendConfession()">Send Confession Live 🚀</button>
-        <p id="sendLabel" style="margin-top:10px; font-weight:bold; color: #ff4b5c;"></p>
-    </div>
+<div class="settings-panel" id="settingsPanel">
+    <b>Profile</b><br>
+    <small id="profileInfo"></small><br><br>
+
+    <input type="text" id="editName" placeholder="Name">
+    <input type="text" id="editClass" placeholder="Class">
+    <select id="editGender">
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+
+    <button onclick="updateProfile()">Save</button>
+</div>
+
+<div class="card">
+
+<div id="registerView">
+    <h2>Create Your Profile</h2>
+    <input type="text" id="username" placeholder="Your Name">
+    <input type="text" id="userclass" placeholder="Class / Section">
+    <select id="usergender">
+        <option value="" disabled selected>Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+    <button onclick="saveProfile()">Create Profile</button>
+</div>
+
+<div id="confessionView" class="hidden">
+    <h2>Express Your Feelings ❤️</h2>
+    <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
+    <button onclick="sendConfession()">Send Confession Live 🚀</button>
+    <p id="sendLabel" style="margin-top:10px; font-weight:bold; color:#ff4b5c;"></p>
+</div>
+
 </div>
 
 <script>
@@ -72,32 +126,61 @@ window.onload = function() {
 };
 
 function saveProfile() {
-    const name = document.getElementById('username').value.trim();
-    const uClass = document.getElementById('userclass').value.trim();
-    const gender = document.getElementById('usergender').value;
+    const name = username.value.trim();
+    const cls = userclass.value.trim();
+    const gender = usergender.value;
 
-    if (!name || !uClass || !gender) {
-        alert('Please fill out all fields!');
+    if (!name || !cls || !gender) {
+        alert("Fill all fields");
         return;
     }
 
     localStorage.setItem('sb_name', name);
-    localStorage.setItem('sb_class', uClass);
+    localStorage.setItem('sb_class', cls);
     localStorage.setItem('sb_gender', gender);
-    
+
     showConfessionPage();
 }
 
 function showConfessionPage() {
-    document.getElementById('registerView').classList.add('hidden');
-    document.getElementById('confessionView').classList.remove('hidden');
+    registerView.classList.add('hidden');
+    confessionView.classList.remove('hidden');
+    document.querySelector('.settings-btn').style.display = "block";
+    loadProfile();
 }
 
+/* SETTINGS */
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+function loadProfile() {
+    const name = localStorage.getItem('sb_name');
+    const cls = localStorage.getItem('sb_class');
+    const gender = localStorage.getItem('sb_gender');
+
+    profileInfo.innerText = `Name: ${name}\nClass: ${cls}\nGender: ${gender}`;
+
+    editName.value = name;
+    editClass.value = cls;
+    editGender.value = gender;
+}
+
+function updateProfile() {
+    localStorage.setItem('sb_name', editName.value);
+    localStorage.setItem('sb_class', editClass.value);
+    localStorage.setItem('sb_gender', editGender.value);
+
+    loadProfile();
+    alert("Profile updated");
+}
+
+/* CONFESSION */
 async function sendConfession() {
-    const msg = document.getElementById('confessionMessage').value.trim();
+    const msg = confessionMessage.value.trim();
     const label = document.getElementById('sendLabel');
 
-    // 🔴 banned words
     const bannedWords = [
         "fuck","ass","beta","beti","randi","chod","chut","lund","gand","sex","bitch","slut"
     ];
@@ -107,47 +190,39 @@ async function sendConfession() {
         return;
     }
 
-    // 🔍 filter check
-    const lowerMsg = msg.toLowerCase();
-    for (let word of bannedWords) {
-        if (lowerMsg.includes(word)) {
+    const lower = msg.toLowerCase();
+    for (let w of bannedWords) {
+        if (lower.includes(w)) {
             label.style.color = "red";
             label.innerText = "bhai confess karna hai to karo nahi to gali mat do";
             return;
         }
     }
 
-    if(SUPABASE_URL.includes("YOUR_SUPABASE")) {
-        alert("HOST ERROR: You need to paste your Supabase URL and Key in the code first!");
-        return;
-    }
-
+    // 🔁 restore sending UI
     label.style.color = "#ff9800";
     label.innerText = "Sending to database cloud...";
 
-    if(!supabaseClient) {
+    if (!supabaseClient) {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
         .from('confessions')
-        .insert([
-            { 
-                name: localStorage.getItem('sb_name'), 
-                class: localStorage.getItem('sb_class'), 
-                gender: localStorage.getItem('sb_gender'), 
-                message: msg 
-            }
-        ]);
+        .insert([{
+            name: localStorage.getItem('sb_name'),
+            class: localStorage.getItem('sb_class'),
+            gender: localStorage.getItem('sb_gender'),
+            message: msg
+        }]);
 
     if (error) {
         label.style.color = "red";
         label.innerText = "Error: Couldn't drop message.";
-        console.error(error);
     } else {
         label.style.color = "#00e676";
         label.innerText = "Sent Successfully! 🚀";
-        document.getElementById('confessionMessage').value = "";
+        confessionMessage.value = "";
         setTimeout(() => { label.innerText = ""; }, 3000);
     }
 }
