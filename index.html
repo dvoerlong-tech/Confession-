@@ -8,225 +8,347 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root { --primary: #ff4b5c; --bg: #fff5f6; --text: #333; }
+:root {
+    --primary:#ff4b5c;
+    --bg:linear-gradient(135deg,#fff5f6,#ffe3e6);
+}
 
 body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background-color: var(--bg); color: var(--text);
-    display: flex; justify-content: center; align-items: center;
-    min-height: 100vh; margin: 0; padding: 20px;
+    font-family:'Segoe UI',system-ui;
+    background:var(--bg);
+    margin:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
 
-/* SETTINGS BUTTON */
-.settings-btn {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    font-size: 22px;
-    cursor: pointer;
-    display: none;
-}
-
-/* SETTINGS PANEL */
-.settings-panel {
-    position: absolute;
-    top: 50px;
-    left: 15px;
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    width: 220px;
-    display: none;
-    text-align: left;
-}
-
-.settings-panel input, .settings-panel select {
-    width: 100%;
-    margin: 5px 0;
-    padding: 8px;
-}
-
-/* CARD */
+/* card */
 .card {
-    background: white; padding: 30px; border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(255, 75, 92, 0.1);
-    width: 100%; max-width: 400px; text-align: center;
+    background:rgba(255,255,255,0.9);
+    backdrop-filter:blur(15px);
+    padding:20px;
+    border-radius:18px;
+    width:100%;
+    max-width:380px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
-h2 { color: var(--primary); }
+/* fullscreen */
+.fullscreen {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    max-width:none;
+    border-radius:0;
+    z-index:5;
+    overflow:hidden;
+}
 
-input, select, textarea {
-    width: 100%; padding: 12px; margin: 10px 0;
-    border: 2px solid #ffd2d7; border-radius: 10px;
-    font-size: 16px;
+/* inputs */
+input,select {
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:10px;
+    border:1px solid #ffc4cb;
+    outline:none;
+}
+
+/* textarea */
+textarea {
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:14px;
+    border:1px solid #ffc4cb;
+    outline:none;
+    height:120px;
+    resize:none;
+    font-size:16px;
+}
+
+textarea::placeholder {
+    font-size:18px;
+    color:#777;
 }
 
 button {
-    background: var(--primary); color: white;
-    padding: 12px; border: none;
-    border-radius: 10px; width: 100%;
+    width:100%;
+    padding:12px;
+    background:var(--primary);
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
 }
 
-.hidden { display: none; }
+/* tabs */
+.tabs {
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:space-around;
+    background:white;
+    padding:8px 0;
+    box-shadow:0 -4px 10px rgba(0,0,0,0.1);
+    z-index:20;
+}
+
+.tab {
+    text-align:center;
+    font-size:12px;
+    cursor:pointer;
+}
+.active { color:var(--primary); font-weight:bold; }
+
+/* 🔥 FEED FIX (IMPORTANT) */
+.feed {
+    height:calc(100vh - 110px);
+    overflow-y:auto;
+    text-align:left;
+    padding:10px;
+    padding-bottom:100px;
+    box-sizing:border-box;
+}
+
+/* 🔥 MAIN FIX HERE */
+.feed-item {
+    background:#fff;
+    padding:12px;
+    margin:10px 0;
+    border-radius:12px;
+
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+
+    /* TEXT FIX */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+/* hidden */
+.hidden { display:none; }
 </style>
 </head>
 
 <body>
 
-<div class="settings-btn" onclick="toggleSettings()">⚙</div>
-
-<div class="settings-panel" id="settingsPanel">
-    <b>Profile</b><br>
-    <small id="profileInfo"></small><br><br>
-
-    <input type="text" id="editName" placeholder="Name">
-    <input type="text" id="editClass" placeholder="Class">
-    <select id="editGender">
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-    </select>
-
-    <button onclick="updateProfile()">Save</button>
-</div>
-
 <div class="card">
 
+<!-- REGISTER -->
 <div id="registerView">
-    <h2>Create Your Profile</h2>
-    <input type="text" id="username" placeholder="Your Name">
-    <input type="text" id="userclass" placeholder="Class / Section">
+    <h2>Create Profile</h2>
+    <input id="username" placeholder="Your Name">
+    <input id="userclass" placeholder="Class / Section">
     <select id="usergender">
-        <option value="" disabled selected>Select Gender</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
+        <option disabled selected>Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
     </select>
     <button onclick="saveProfile()">Create Profile</button>
 </div>
 
+<!-- CONFESSION -->
 <div id="confessionView" class="hidden">
     <h2>Express Your Feelings ❤️</h2>
-    <textarea id="confessionMessage" rows="5" placeholder="Write your secret confession here..." required></textarea>
-    <button onclick="sendConfession()">Send Confession Live 🚀</button>
-    <p id="sendLabel" style="margin-top:10px; font-weight:bold; color:#ff4b5c;"></p>
+    <textarea id="confessionMessage"
+    placeholder="Write your secret confession here..."></textarea>
+
+    <button id="sendBtn" onclick="sendConfession()">Send Confession 🚀</button>
+    <p id="sendLabel"></p>
 </div>
 
+<!-- PROFILE -->
+<div id="profileView" class="hidden">
+    <h2>Your Profile</h2>
+    <p id="profileInfo"></p>
+    <button onclick="showEdit()">Edit</button>
+</div>
+
+<!-- EDIT -->
+<div id="editView" class="hidden">
+    <h2>Edit Profile</h2>
+    <input id="editName">
+    <input id="editClass">
+    <select id="editGender">
+        <option>Male</option>
+        <option>Female</option>
+    </select>
+    <button onclick="updateProfile()">Save</button>
+</div>
+
+<!-- FEED -->
+<div id="feedView" class="hidden">
+    <h2>Confession Feed 🌐</h2>
+    <div class="feed" id="feedList"></div>
+</div>
+
+</div>
+
+<!-- TABS -->
+<div class="tabs hidden" id="tabs">
+    <div class="tab" onclick="showTab('profile')">👤<br>You</div>
+    <div class="tab active" onclick="showTab('confession')">➕<br>New</div>
+    <div class="tab" onclick="showTab('feed')">🌐<br>Feed</div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://gsckseffapurzqkexeup.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
+const SUPABASE_URL="https://gsckseffapurzqkexeup.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
 
 let supabaseClient;
 
-window.onload = function() {
-    if (localStorage.getItem('sb_name')) {
-        showConfessionPage();
+window.onload=()=>{
+    if(localStorage.getItem('sb_name')){
+        registerView.classList.add('hidden');
+        tabs.classList.remove('hidden');
+        showTab('confession');
     }
 };
 
-function saveProfile() {
-    const name = username.value.trim();
-    const cls = userclass.value.trim();
-    const gender = usergender.value;
+/* profile */
+function saveProfile(){
+    localStorage.setItem('sb_name',username.value);
+    localStorage.setItem('sb_class',userclass.value);
+    localStorage.setItem('sb_gender',usergender.value);
 
-    if (!name || !cls || !gender) {
-        alert("Fill all fields");
-        return;
-    }
-
-    localStorage.setItem('sb_name', name);
-    localStorage.setItem('sb_class', cls);
-    localStorage.setItem('sb_gender', gender);
-
-    showConfessionPage();
-}
-
-function showConfessionPage() {
     registerView.classList.add('hidden');
-    confessionView.classList.remove('hidden');
-    document.querySelector('.settings-btn').style.display = "block";
+    tabs.classList.remove('hidden');
+    showTab('confession');
+}
+
+function loadProfile(){
+    profileInfo.innerText =
+    `Name: ${localStorage.getItem('sb_name')}
+Class: ${localStorage.getItem('sb_class')}
+Gender: ${localStorage.getItem('sb_gender')}`;
+}
+
+/* edit */
+function showEdit(){
+    profileView.classList.add('hidden');
+    editView.classList.remove('hidden');
+
+    editName.value=localStorage.getItem('sb_name');
+    editClass.value=localStorage.getItem('sb_class');
+    editGender.value=localStorage.getItem('sb_gender');
+}
+
+function updateProfile(){
+    localStorage.setItem('sb_name',editName.value);
+    localStorage.setItem('sb_class',editClass.value);
+    localStorage.setItem('sb_gender',editGender.value);
+
+    editView.classList.add('hidden');
+    profileView.classList.remove('hidden');
     loadProfile();
 }
 
-/* SETTINGS */
-function toggleSettings() {
-    const panel = document.getElementById('settingsPanel');
-    panel.style.display = panel.style.display === "block" ? "none" : "block";
+/* tabs */
+function showTab(tab){
+    confessionView.classList.add('hidden');
+    profileView.classList.add('hidden');
+    editView.classList.add('hidden');
+    feedView.classList.add('hidden');
+
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector('.card').classList.remove('fullscreen');
+
+    if(tab==='confession'){
+        confessionView.classList.remove('hidden');
+        document.querySelectorAll('.tab')[1].classList.add('active');
+    }
+
+    if(tab==='profile'){
+        profileView.classList.remove('hidden');
+        loadProfile();
+        document.querySelectorAll('.tab')[0].classList.add('active');
+    }
+
+    if(tab==='feed'){
+        feedView.classList.remove('hidden');
+        document.querySelector('.card').classList.add('fullscreen');
+        loadFeed();
+        document.querySelectorAll('.tab')[2].classList.add('active');
+    }
 }
 
-function loadProfile() {
-    const name = localStorage.getItem('sb_name');
-    const cls = localStorage.getItem('sb_class');
-    const gender = localStorage.getItem('sb_gender');
+/* send */
+async function sendConfession(){
+    const msg=confessionMessage.value.trim();
+    const label=sendLabel;
+    const btn=document.getElementById("sendBtn");
 
-    profileInfo.innerText = `Name: ${name}\nClass: ${cls}\nGender: ${gender}`;
+    if(!msg) return;
 
-    editName.value = name;
-    editClass.value = cls;
-    editGender.value = gender;
+    label.innerText="Sending...";
+    btn.disabled=true;
+
+    if(!supabaseClient){
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    }
+
+    const {error}=await supabaseClient.from('confessions').insert([{
+        name:localStorage.getItem('sb_name'),
+        class:localStorage.getItem('sb_class'),
+        gender:localStorage.getItem('sb_gender'),
+        message:msg
+    }]);
+
+    btn.disabled=false;
+
+    if(error){
+        label.innerText="Error";
+    } else {
+        label.innerText="Sent";
+        confessionMessage.value="";
+    }
 }
 
-function updateProfile() {
-    localStorage.setItem('sb_name', editName.value);
-    localStorage.setItem('sb_class', editClass.value);
-    localStorage.setItem('sb_gender', editGender.value);
+/* feed */
+async function loadFeed(){
+    feedList.innerHTML = "<p style='text-align:center'>Loading confessions...</p>";
 
-    loadProfile();
-    alert("Profile updated");
-}
+    if(!supabaseClient){
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    }
 
-/* CONFESSION */
-async function sendConfession() {
-    const msg = confessionMessage.value.trim();
-    const label = document.getElementById('sendLabel');
+    const {data,error}=await supabaseClient
+        .from('confessions')
+        .select("*")
+        .order('id',{ascending:false});
 
-    const bannedWords = [
-        "fuck","ass","beta","beti","randi","chod","chut","lund","gand","sex","bitch","slut"
-    ];
-
-    if (!msg) {
-        alert("Type a message before sending!");
+    if(error){
+        feedList.innerHTML = "<p style='text-align:center;color:red'>Failed to load</p>";
         return;
     }
 
-    const lower = msg.toLowerCase();
-    for (let w of bannedWords) {
-        if (lower.includes(w)) {
-            label.style.color = "red";
-            label.innerText = "bhai confess karna hai to karo nahi to gali mat do";
-            return;
-        }
+    if(!data || data.length===0){
+        feedList.innerHTML = "<p style='text-align:center'>No confessions yet</p>";
+        return;
     }
 
-    // 🔁 restore sending UI
-    label.style.color = "#ff9800";
-    label.innerText = "Sending to database cloud...";
+    feedList.innerHTML="";
 
-    if (!supabaseClient) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
+    data.forEach(item=>{
+        const div=document.createElement('div');
+        div.className="feed-item";
 
-    const { error } = await supabaseClient
-        .from('confessions')
-        .insert([{
-            name: localStorage.getItem('sb_name'),
-            class: localStorage.getItem('sb_class'),
-            gender: localStorage.getItem('sb_gender'),
-            message: msg
-        }]);
+        let name = item.name===localStorage.getItem('sb_name') ? "You" : "Anonymous";
 
-    if (error) {
-        label.style.color = "red";
-        label.innerText = "Error: Couldn't drop message.";
-    } else {
-        label.style.color = "#00e676";
-        label.innerText = "Sent Successfully! 🚀";
-        confessionMessage.value = "";
-        setTimeout(() => { label.innerText = ""; }, 3000);
-    }
+        div.innerHTML = `<b>${name}</b> (${item.class})<br>${item.message}`;
+        feedList.appendChild(div);
+    });
 }
 </script>
-
 </body>
 </html>
