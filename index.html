@@ -23,7 +23,6 @@ body {
     height:100vh;
 }
 
-/* card */
 .card {
     background:rgba(255,255,255,0.9);
     backdrop-filter:blur(15px);
@@ -35,7 +34,6 @@ body {
     box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
-/* fullscreen */
 .fullscreen {
     position:fixed;
     top:0;
@@ -48,7 +46,6 @@ body {
     overflow:hidden;
 }
 
-/* inputs */
 input,select {
     width:100%;
     padding:12px;
@@ -58,7 +55,6 @@ input,select {
     outline:none;
 }
 
-/* textarea */
 textarea {
     width:100%;
     padding:12px;
@@ -87,7 +83,6 @@ button {
     cursor:pointer;
 }
 
-/* tabs */
 .tabs {
     position:fixed;
     bottom:0;
@@ -108,7 +103,6 @@ button {
 }
 .active { color:var(--primary); font-weight:bold; }
 
-/* 🔥 FEED FIX (IMPORTANT) */
 .feed {
     height:calc(100vh - 110px);
     overflow-y:auto;
@@ -118,24 +112,19 @@ button {
     box-sizing:border-box;
 }
 
-/* 🔥 MAIN FIX HERE */
 .feed-item {
     background:#fff;
     padding:12px;
     margin:10px 0;
     border-radius:12px;
-
     width:100%;
-    max-width:100%;
     box-sizing:border-box;
 
-    /* TEXT FIX */
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
 }
 
-/* hidden */
 .hidden { display:none; }
 </style>
 </head>
@@ -144,7 +133,6 @@ button {
 
 <div class="card">
 
-<!-- REGISTER -->
 <div id="registerView">
     <h2>Create Profile</h2>
     <input id="username" placeholder="Your Name">
@@ -157,7 +145,6 @@ button {
     <button onclick="saveProfile()">Create Profile</button>
 </div>
 
-<!-- CONFESSION -->
 <div id="confessionView" class="hidden">
     <h2>Express Your Feelings ❤️</h2>
     <textarea id="confessionMessage"
@@ -167,14 +154,12 @@ button {
     <p id="sendLabel"></p>
 </div>
 
-<!-- PROFILE -->
 <div id="profileView" class="hidden">
     <h2>Your Profile</h2>
     <p id="profileInfo"></p>
     <button onclick="showEdit()">Edit</button>
 </div>
 
-<!-- EDIT -->
 <div id="editView" class="hidden">
     <h2>Edit Profile</h2>
     <input id="editName">
@@ -186,7 +171,6 @@ button {
     <button onclick="updateProfile()">Save</button>
 </div>
 
-<!-- FEED -->
 <div id="feedView" class="hidden">
     <h2>Confession Feed 🌐</h2>
     <div class="feed" id="feedList"></div>
@@ -194,7 +178,6 @@ button {
 
 </div>
 
-<!-- TABS -->
 <div class="tabs hidden" id="tabs">
     <div class="tab" onclick="showTab('profile')">👤<br>You</div>
     <div class="tab active" onclick="showTab('confession')">➕<br>New</div>
@@ -217,6 +200,11 @@ window.onload=()=>{
 
 /* profile */
 function saveProfile(){
+    if(!username.value || !userclass.value || usergender.selectedIndex===0){
+        alert("Fill all fields");
+        return;
+    }
+
     localStorage.setItem('sb_name',username.value);
     localStorage.setItem('sb_class',userclass.value);
     localStorage.setItem('sb_gender',usergender.value);
@@ -282,14 +270,29 @@ function showTab(tab){
     }
 }
 
-/* send */
+/* 🔥 WORD FILTER BACK */
 async function sendConfession(){
     const msg=confessionMessage.value.trim();
     const label=sendLabel;
     const btn=document.getElementById("sendBtn");
 
-    if(!msg) return;
+    const banned=["fuck","ass","randi","chod","chut","lund","gand","sex","bitch","slut"];
 
+    if(!msg){
+        alert("Type message");
+        return;
+    }
+
+    const lower=msg.toLowerCase();
+    for(let w of banned){
+        if(lower.includes(w)){
+            label.style.color="red";
+            label.innerText="Don't use abusive words.";
+            return;
+        }
+    }
+
+    label.style.color="#ff9800";
     label.innerText="Sending...";
     btn.disabled=true;
 
@@ -307,8 +310,10 @@ async function sendConfession(){
     btn.disabled=false;
 
     if(error){
+        label.style.color="red";
         label.innerText="Error";
     } else {
+        label.style.color="green";
         label.innerText="Sent";
         confessionMessage.value="";
     }
@@ -316,26 +321,16 @@ async function sendConfession(){
 
 /* feed */
 async function loadFeed(){
-    feedList.innerHTML = "<p style='text-align:center'>Loading confessions...</p>";
+    feedList.innerHTML = "<p style='text-align:center'>Loading...</p>";
 
     if(!supabaseClient){
         supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
     }
 
-    const {data,error}=await supabaseClient
+    const {data}=await supabaseClient
         .from('confessions')
         .select("*")
         .order('id',{ascending:false});
-
-    if(error){
-        feedList.innerHTML = "<p style='text-align:center;color:red'>Failed to load</p>";
-        return;
-    }
-
-    if(!data || data.length===0){
-        feedList.innerHTML = "<p style='text-align:center'>No confessions yet</p>";
-        return;
-    }
 
     feedList.innerHTML="";
 
