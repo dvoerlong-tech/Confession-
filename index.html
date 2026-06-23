@@ -1,349 +1,407 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Confession Box</title>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Confession Box</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>  
+:root {  
+    --primary:#ff4b5c;  
+    --bg:linear-gradient(135deg,#fff5f6,#ffe3e6);  
+}  
+  
+body {  
+    font-family:'Segoe UI',system-ui;  
+    background:var(--bg);  
+    margin:0;  
+    display:flex;  
+    justify-content:center;  
+    align-items:center;  
+    height:100vh;  
+}  
+  
+.card {  
+    background:rgba(255,255,255,0.9);  
+    backdrop-filter:blur(15px);  
+    padding:20px;  
+    border-radius:18px;  
+    width:100%;  
+    max-width:380px;  
+    text-align:center;  
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);  
+}  
+  
+.fullscreen {  
+    position:fixed;  
+    top:0;  
+    left:0;  
+    width:100%;  
+    height:100%;  
+    max-width:none;  
+    border-radius:0;  
+    z-index:5;  
+    overflow:hidden;  
+}  
+  
+input,select {  
+    width:100%;  
+    padding:12px;  
+    margin:8px 0;  
+    border-radius:10px;  
+    border:1px solid #ffc4cb;  
+    outline:none;  
+}  
+  
+textarea {  
+    width:100%;  
+    padding:12px;  
+    margin:8px 0;  
+    border-radius:14px;  
+    border:1px solid #ffc4cb;  
+    outline:none;  
+    height:120px;  
+    resize:none;  
+    font-size:16px;  
+}  
+  
+textarea::placeholder {  
+    font-size:18px;  
+    color:#777;  
+}  
+  
+button {  
+    width:100%;  
+    padding:12px;  
+    background:var(--primary);  
+    color:white;  
+    border:none;  
+    border-radius:10px;  
+    font-weight:bold;  
+    cursor:pointer;  
+}  
+  
+.tabs {  
+    position:fixed;  
+    bottom:0;  
+    left:0;  
+    width:100%;  
+    display:flex;  
+    justify-content:space-around;  
+    background:white;  
+    padding:8px 0;  
+    box-shadow:0 -4px 10px rgba(0,0,0,0.1);  
+    z-index:20;  
+}  
+  
+.tab {  
+    text-align:center;  
+    font-size:12px;  
+    cursor:pointer;  
+}  
+.active { color:var(--primary); font-weight:bold; }  
+  
+.feed {  
+    height:calc(100vh - 110px);  
+    overflow-y:auto;  
+    text-align:left;  
+    padding:10px;  
+    padding-bottom:100px;  
+    box-sizing:border-box;  
+}  
+  
+.feed-item {  
+    background:#fff;  
+    padding:12px;  
+    margin:10px 0;  
+    border-radius:12px;  
+    width:100%;  
+    box-sizing:border-box;  
+  
+    word-break:break-word;  
+    overflow-wrap:anywhere;  
+    white-space:pre-wrap;  
+}  
+  
+.hidden { display:none; }  
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-:root {
-    --primary:#ff4b5c;
-    --bg:linear-gradient(135deg,#fff5f6,#ffe3e6);
+/* Like Button Styles */
+.like-container {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
 }
 
-body {
-    font-family:'Segoe UI',system-ui;
-    background:var(--bg);
-    margin:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+.like-btn {
+    cursor: pointer;
+    font-size: 18px;
+    margin-right: 6px;
+    user-select: none;
+    display: inline-block;
+    transition: transform 0.1s ease;
 }
 
-.card {
-    background:rgba(255,255,255,0.9);
-    backdrop-filter:blur(15px);
-    padding:20px;
-    border-radius:18px;
-    width:100%;
-    max-width:380px;
-    text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+.like-btn:active {
+    transform: scale(1.2);
 }
 
-.fullscreen {
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    max-width:none;
-    border-radius:0;
-    z-index:5;
-    overflow:hidden;
+.like-btn.disabled {
+    cursor: default;
+    pointer-events: none;
 }
+</style>  </head>  <body>  <div class="card">  <div id="registerView">  
+    <h2>Create Profile</h2>  
+    <input id="username" placeholder="Your Name">  
+    <input id="userclass" placeholder="Class / Section">  
+    <select id="usergender">  
+        <option disabled selected>Select Gender</option>  
+        <option>Male</option>  
+        <option>Female</option>  
+    </select>  
+    <button onclick="saveProfile()">Create Profile</button>  
+</div>  <div id="confessionView" class="hidden">  
+    <h2>Express Your Feelings ❤️</h2>  
+    <textarea id="confessionMessage"  
+    placeholder="Write your secret confession here..."></textarea>  <button id="sendBtn" onclick="sendConfession()">Send Confession 🚀</button>  
+<p id="sendLabel"></p>
 
-input,select {
-    width:100%;
-    padding:12px;
-    margin:8px 0;
-    border-radius:10px;
-    border:1px solid #ffc4cb;
-    outline:none;
-}
+</div>  <div id="profileView" class="hidden">  
+    <h2>Your Profile</h2>  
+    <p id="profileInfo"></p>  
+    <button onclick="showEdit()">Edit</button>  
+</div>  <div id="editView" class="hidden">  
+    <h2>Edit Profile</h2>  
+    <input id="editName">  
+    <input id="editClass">  
+    <select id="editGender">  
+        <option>Male</option>  
+        <option>Female</option>  
+    </select>  
+    <button onclick="updateProfile()">Save</button>  
+</div>  <div id="feedView" class="hidden">  
+    <h2>Confession Feed 🌐</h2>  
+    <div class="feed" id="feedList"></div>  
+</div>  </div>  <div class="tabs hidden" id="tabs">  
+    <div class="tab" onclick="showTab('profile')">👤<br>You</div>  
+    <div class="tab active" onclick="showTab('confession')">➕<br>New</div>  
+    <div class="tab" onclick="showTab('feed')">🌐<br>Feed</div>  
+</div>  <script>  
+const SUPABASE_URL="https://gsckseffapurzqkexeup.supabase.co";  
+const SUPABASE_ANON_KEY="sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";  
+  
+let supabaseClient;  
+  
+window.onload=()=>{  
+    if(localStorage.getItem('sb_name')){  
+        registerView.classList.add('hidden');  
+        tabs.classList.remove('hidden');  
+        showTab('confession');  
+    }  
+};  
+  
+/* profile */  
+function saveProfile(){  
+    if(!username.value || !userclass.value || usergender.selectedIndex===0){  
+        alert("Fill all fields");  
+        return;  
+    }  
+  
+    localStorage.setItem('sb_name',username.value);  
+    localStorage.setItem('sb_class',userclass.value);  
+    localStorage.setItem('sb_gender',usergender.value);  
+  
+    registerView.classList.add('hidden');  
+    tabs.classList.remove('hidden');  
+    showTab('confession');  
+}  
+  
+function loadProfile(){  
+    profileInfo.innerText =  
+    `Name: ${localStorage.getItem('sb_name')}  
+Class: ${localStorage.getItem('sb_class')}  
+Gender: ${localStorage.getItem('sb_gender')}`;  
+}  
+  
+/* edit */  
+function showEdit(){  
+    profileView.classList.add('hidden');  
+    editView.classList.remove('hidden');  
+  
+    editName.value=localStorage.getItem('sb_name');  
+    editClass.value=localStorage.getItem('sb_class');  
+    editGender.value=localStorage.getItem('sb_gender');  
+}  
+  
+function updateProfile(){  
+    localStorage.setItem('sb_name',editName.value);  
+    localStorage.setItem('sb_class',editClass.value);  
+    localStorage.setItem('sb_gender',editGender.value);  
+  
+    editView.classList.add('hidden');  
+    profileView.classList.remove('hidden');  
+    loadProfile();  
+}  
+  
+/* tabs */  
+function showTab(tab){  
+    confessionView.classList.add('hidden');  
+    profileView.classList.add('hidden');  
+    editView.classList.add('hidden');  
+    feedView.classList.add('hidden');  
+  
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));  
+    document.querySelector('.card').classList.remove('fullscreen');  
+  
+    if(tab==='confession'){  
+        confessionView.classList.remove('hidden');  
+        document.querySelectorAll('.tab')[1].classList.add('active');  
+    }  
+  
+    if(tab==='profile'){  
+        profileView.classList.remove('hidden');  
+        loadProfile();  
+        document.querySelectorAll('.tab')[0].classList.add('active');  
+    }  
+  
+    if(tab==='feed'){  
+        feedView.classList.remove('hidden');  
+        document.querySelector('.card').classList.add('fullscreen');  
+        loadFeed();  
+        document.querySelectorAll('.tab')[2].classList.add('active');  
+    }  
+}  
+  
+/* 🔥 WORD FILTER BACK */  
+async function sendConfession(){  
+    const msg=confessionMessage.value.trim();  
+    const label=sendLabel;  
+    const btn=document.getElementById("sendBtn");  
+  
+    const banned=["fuck","ass","randi","chod","chut","lund","gand","sex","bitch","slut"];  
+  
+    if(!msg){  
+        alert("Type message");  
+        return;  
+    }  
+  
+    const lower=msg.toLowerCase();  
+    for(let w of banned){  
+        if(lower.includes(w)){  
+            label.style.color="red";  
+            label.innerText="Don't use abusive words.";  
+            return;  
+        }  
+    }  
+  
+    label.style.color="#ff9800";  
+    label.innerText="Sending...";  
+    btn.disabled=true;  
+  
+    if(!supabaseClient){  
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
+    }  
+  
+    const {error}=await supabaseClient.from('confessions').insert([{  
+        name:localStorage.getItem('sb_name'),  
+        class:localStorage.getItem('sb_class'),  
+        gender:localStorage.getItem('sb_gender'),  
+        message:msg  
+    }]);  
+  
+    btn.disabled=false;  
+  
+    if(error){  
+        label.style.color="red";  
+        label.innerText="Error";  
+    } else {  
+        label.style.color="green";  
+        label.innerText="Sent";  
+        confessionMessage.value="";  
+    }  
+}  
+  
+/* feed */  
+async function loadFeed(){  
+    feedList.innerHTML = "<p style='text-align:center'>Loading...</p>";  
+  
+    if(!supabaseClient){  
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
+    }  
+  
+    const {data}=await supabaseClient  
+        .from('confessions')  
+        .select("*")  
+        .order('id',{ascending:false});  
+  
+    feedList.innerHTML="";  
+  
+    const likedIds = getLikedConfessions();
 
-textarea {
-    width:100%;
-    padding:12px;
-    margin:8px 0;
-    border-radius:14px;
-    border:1px solid #ffc4cb;
-    outline:none;
-    height:120px;
-    resize:none;
-    font-size:16px;
-}
+    data.forEach(item=>{  
+        const div=document.createElement('div');  
+        div.className="feed-item";  
+  
+        let name = item.name===localStorage.getItem('sb_name') ? "You" : "Anonymous";  
+        let likesCount = item.likes || 0;
+        let isLiked = likedIds.includes(item.id);
 
-textarea::placeholder {
-    font-size:18px;
-    color:#777;
-}
+        let heartHtml = isLiked ? 
+            `<span class="like-btn" id="like-btn-${item.id}" onclick="toggleLike(${item.id})">❤️</span>` : 
+            `<span class="like-btn" id="like-btn-${item.id}" onclick="toggleLike(${item.id})">🤍</span>`;
 
-button {
-    width:100%;
-    padding:12px;
-    background:var(--primary);
-    color:white;
-    border:none;
-    border-radius:10px;
-    font-weight:bold;
-    cursor:pointer;
-}
+        div.innerHTML = `<b>${name}</b> (${item.class})<br>${item.message}
+            <div class="like-container">
+                ${heartHtml}
+                <span id="like-count-${item.id}">${likesCount}</span>
+            </div>`;  
+        feedList.appendChild(div);  
+    });  
+}  
 
-.tabs {
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    display:flex;
-    justify-content:space-around;
-    background:white;
-    padding:8px 0;
-    box-shadow:0 -4px 10px rgba(0,0,0,0.1);
-    z-index:20;
-}
-
-.tab {
-    text-align:center;
-    font-size:12px;
-    cursor:pointer;
-}
-.active { color:var(--primary); font-weight:bold; }
-
-.feed {
-    height:calc(100vh - 110px);
-    overflow-y:auto;
-    text-align:left;
-    padding:10px;
-    padding-bottom:100px;
-    box-sizing:border-box;
-}
-
-.feed-item {
-    background:#fff;
-    padding:12px;
-    margin:10px 0;
-    border-radius:12px;
-    width:100%;
-    box-sizing:border-box;
-
-    word-break:break-word;
-    overflow-wrap:anywhere;
-    white-space:pre-wrap;
-}
-
-.hidden { display:none; }
-</style>
-</head>
-
-<body>
-
-<div class="card">
-
-<div id="registerView">
-    <h2>Create Profile</h2>
-    <input id="username" placeholder="Your Name">
-    <input id="userclass" placeholder="Class / Section">
-    <select id="usergender">
-        <option disabled selected>Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-    </select>
-    <button onclick="saveProfile()">Create Profile</button>
-</div>
-
-<div id="confessionView" class="hidden">
-    <h2>Express Your Feelings ❤️</h2>
-    <textarea id="confessionMessage"
-    placeholder="Write your secret confession here..."></textarea>
-
-    <button id="sendBtn" onclick="sendConfession()">Send Confession 🚀</button>
-    <p id="sendLabel"></p>
-</div>
-
-<div id="profileView" class="hidden">
-    <h2>Your Profile</h2>
-    <p id="profileInfo"></p>
-    <button onclick="showEdit()">Edit</button>
-</div>
-
-<div id="editView" class="hidden">
-    <h2>Edit Profile</h2>
-    <input id="editName">
-    <input id="editClass">
-    <select id="editGender">
-        <option>Male</option>
-        <option>Female</option>
-    </select>
-    <button onclick="updateProfile()">Save</button>
-</div>
-
-<div id="feedView" class="hidden">
-    <h2>Confession Feed 🌐</h2>
-    <div class="feed" id="feedList"></div>
-</div>
-
-</div>
-
-<div class="tabs hidden" id="tabs">
-    <div class="tab" onclick="showTab('profile')">👤<br>You</div>
-    <div class="tab active" onclick="showTab('confession')">➕<br>New</div>
-    <div class="tab" onclick="showTab('feed')">🌐<br>Feed</div>
-</div>
-
-<script>
-const SUPABASE_URL="https://gsckseffapurzqkexeup.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";
-
-let supabaseClient;
-
-window.onload=()=>{
-    if(localStorage.getItem('sb_name')){
-        registerView.classList.add('hidden');
-        tabs.classList.remove('hidden');
-        showTab('confession');
+/* Like handlers */
+function getLikedConfessions() {
+    try {
+        return JSON.parse(localStorage.getItem('sb_liked_confessions')) || [];
+    } catch(e) {
+        return [];
     }
-};
-
-/* profile */
-function saveProfile(){
-    if(!username.value || !userclass.value || usergender.selectedIndex===0){
-        alert("Fill all fields");
-        return;
-    }
-
-    localStorage.setItem('sb_name',username.value);
-    localStorage.setItem('sb_class',userclass.value);
-    localStorage.setItem('sb_gender',usergender.value);
-
-    registerView.classList.add('hidden');
-    tabs.classList.remove('hidden');
-    showTab('confession');
 }
 
-function loadProfile(){
-    profileInfo.innerText =
-    `Name: ${localStorage.getItem('sb_name')}
-Class: ${localStorage.getItem('sb_class')}
-Gender: ${localStorage.getItem('sb_gender')}`;
-}
+async function toggleLike(id) {
+    let liked = getLikedConfessions();
+    const btn = document.getElementById(`like-btn-${id}`);
+    const countSpan = document.getElementById(`like-count-${id}`);
+    
+    if (!btn || !countSpan) return;
 
-/* edit */
-function showEdit(){
-    profileView.classList.add('hidden');
-    editView.classList.remove('hidden');
+    let currentLikes = parseInt(countSpan.innerText) || 0;
+    let isCurrentlyLiked = liked.includes(id);
+    let newLikesCount = currentLikes;
 
-    editName.value=localStorage.getItem('sb_name');
-    editClass.value=localStorage.getItem('sb_class');
-    editGender.value=localStorage.getItem('sb_gender');
-}
-
-function updateProfile(){
-    localStorage.setItem('sb_name',editName.value);
-    localStorage.setItem('sb_class',editClass.value);
-    localStorage.setItem('sb_gender',editGender.value);
-
-    editView.classList.add('hidden');
-    profileView.classList.remove('hidden');
-    loadProfile();
-}
-
-/* tabs */
-function showTab(tab){
-    confessionView.classList.add('hidden');
-    profileView.classList.add('hidden');
-    editView.classList.add('hidden');
-    feedView.classList.add('hidden');
-
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.querySelector('.card').classList.remove('fullscreen');
-
-    if(tab==='confession'){
-        confessionView.classList.remove('hidden');
-        document.querySelectorAll('.tab')[1].classList.add('active');
-    }
-
-    if(tab==='profile'){
-        profileView.classList.remove('hidden');
-        loadProfile();
-        document.querySelectorAll('.tab')[0].classList.add('active');
-    }
-
-    if(tab==='feed'){
-        feedView.classList.remove('hidden');
-        document.querySelector('.card').classList.add('fullscreen');
-        loadFeed();
-        document.querySelectorAll('.tab')[2].classList.add('active');
-    }
-}
-
-/* 🔥 WORD FILTER BACK */
-async function sendConfession(){
-    const msg=confessionMessage.value.trim();
-    const label=sendLabel;
-    const btn=document.getElementById("sendBtn");
-
-    const banned=["fuck","ass","randi","chod","chut","lund","gand","sex","bitch","slut","suck","chinar","bhadwa","bastard"];
-
-    if(!msg){
-        alert("Type message");
-        return;
-    }
-
-    const lower=msg.toLowerCase();
-    for(let w of banned){
-        if(lower.includes(w)){
-            label.style.color="red";
-            label.innerText="Bhai confess karna hai to karo lekin gali mat do";
-            return;
-        }
-    }
-
-    label.style.color="#ff9800";
-    label.innerText="Sending...";
-    btn.disabled=true;
-
-    if(!supabaseClient){
-        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-    }
-
-    const {error}=await supabaseClient.from('confessions').insert([{
-        name:localStorage.getItem('sb_name'),
-        class:localStorage.getItem('sb_class'),
-        gender:localStorage.getItem('sb_gender'),
-        message:msg
-    }]);
-
-    btn.disabled=false;
-
-    if(error){
-        label.style.color="red";
-        label.innerText="Error";
+    if (isCurrentlyLiked) {
+        // Cancel Like (Unlike)
+        liked = liked.filter(likedId => likedId !== id);
+        newLikesCount = Math.max(0, currentLikes - 1);
+        btn.innerHTML = "🤍";
     } else {
-        label.style.color="green";
-        label.innerText="Sent";
-        confessionMessage.value="";
-    }
-}
-
-/* feed */
-async function loadFeed(){
-    feedList.innerHTML = "<p style='text-align:center'>Loading...</p>";
-
-    if(!supabaseClient){
-        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+        // Add Like
+        liked.push(id);
+        newLikesCount = currentLikes + 1;
+        btn.innerHTML = "❤️";
     }
 
-    const {data}=await supabaseClient
+    // Update Local Storage immediately for local interface state
+    localStorage.setItem('sb_liked_confessions', JSON.stringify(liked));
+    countSpan.innerText = newLikesCount;
+
+    if(!supabaseClient){  
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
+    }  
+
+    // Update the record remotely inside Supabase Database
+    await supabaseClient
         .from('confessions')
-        .select("*")
-        .order('id',{ascending:false});
-
-    feedList.innerHTML="";
-
-    data.forEach(item=>{
-        const div=document.createElement('div');
-        div.className="feed-item";
-
-        let name = item.name===localStorage.getItem('sb_name') ? "You" : "Anonymous";
-
-        div.innerHTML = `<b>${name}</b> (${item.class})<br>${item.message}`;
-        feedList.appendChild(div);
-    });
+        .update({ likes: newLikesCount })
+        .eq('id', id);
 }
-</script>
-</body>
+</script>  </body>  
 </html>
