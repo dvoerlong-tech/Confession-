@@ -99,7 +99,7 @@ button {
 .active { color:var(--primary); font-weight:bold; }  
   
 .feed {  
-    height:calc(100vh - 110px);  
+    height:calc(100vh - 160px);  
     overflow-y:auto;  
     text-align:left;  
     padding:10px;  
@@ -122,31 +122,110 @@ button {
   
 .hidden { display:none; }  
 
-/* Like Button Styles */
+/* Feed Sorting Filter Control Styles */
+.feed-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 10px 10px 10px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 4px;
+    border-radius: 30px;
+}
+
+.feed-toggle .toggle-btn {
+    flex: 1;
+    background: transparent;
+    color: #666;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.feed-toggle .toggle-btn.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255, 75, 92, 0.3);
+}
+
+/* Multi-Emoji Interaction Tray Setup */
 .like-container {
     display: flex;
     align-items: center;
-    margin-top: 8px;
-    font-size: 14px;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 13px;
     color: #555;
+    background: #fff5f6;
+    padding: 5px 12px;
+    border-radius: 20px;
+    width: fit-content;
 }
 
-.like-btn {
+.react-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     cursor: pointer;
-    font-size: 18px;
-    margin-right: 6px;
     user-select: none;
+}
+
+.react-btn {
+    font-size: 17px;
     display: inline-block;
-    transition: transform 0.1s ease;
+    transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
 }
 
-.like-btn:active {
-    transform: scale(1.2);
+.react-btn:active {
+    transform: scale(1.35);
 }
 
-.like-btn.disabled {
-    cursor: default;
-    pointer-events: none;
+/* Smooth Spring Popup Ticker Design */
+.fomo-ticker {
+    font-size: 13px;
+    color: #e91e63;
+    text-align: center;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(255, 75, 92, 0.1);
+    
+    /* Initial Unloaded State */
+    opacity: 0;
+    transform: scale(0.7);
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Loaded Spring State Triggered via JavaScript */
+.fomo-ticker.visible {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 50px;
+    padding: 8px;
+    margin: -5px 10px 12px 10px;
+}
+
+@keyframes pulseDot {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+.live-dot {
+    height: 8px;
+    width: 8px;
+    background-color: #ff4b5c;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    animation: pulseDot 1.8s infinite ease-in-out;
 }
 </style>  </head>  <body>  <div class="card">  <div id="registerView">  
     <h2>Create Profile</h2>  
@@ -179,6 +258,13 @@ button {
     <button onclick="updateProfile()">Save</button>  
 </div>  <div id="feedView" class="hidden">  
     <h2>Confession Feed 🌐</h2>  
+    <div id="fomoTicker" class="fomo-ticker"></div>
+    
+    <div class="feed-toggle">
+        <button id="btnSortLatest" class="toggle-btn active" onclick="changeFeedSorting('latest')">⏰ Latest</button>
+        <button id="btnSortHot" class="toggle-btn" onclick="changeFeedSorting('hot')">🔥 Hot</button>
+    </div>
+
     <div class="feed" id="feedList"></div>  
 </div>  </div>  <div class="tabs hidden" id="tabs">  
     <div class="tab" onclick="showTab('profile')">👤<br>You</div>  
@@ -189,6 +275,7 @@ const SUPABASE_URL="https://gsckseffapurzqkexeup.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";  
   
 let supabaseClient;  
+let currentSortEngine = 'latest';
   
 window.onload=()=>{  
     if(localStorage.getItem('sb_name')){  
@@ -318,89 +405,179 @@ async function sendConfession(){
         confessionMessage.value="";  
     }  
 }  
+
+/* Pop Up FOMO Hook Trigger with Smart Time-of-Day Ranges */
+function updateFomoTicker() {
+    const ticker = document.getElementById('fomoTicker');
+    if (!ticker) return;
+
+    const currentHour = new Date().getHours();
+    let min = 0;
+    let max = 0;
+
+    // Strict time validation algorithms requested
+    if (currentHour >= 14 && currentHour < 20) { 
+        // 2 PM to 8 PM
+        min = 9; max = 16;
+    } else if (currentHour >= 21 && currentHour < 22) { 
+        // 9 PM to 10 PM
+        min = 3; max = 4;
+    } else if (currentHour >= 22 || currentHour < 8) { 
+        // 10 PM to 8 AM
+        min = 0; max = 0;
+    } else if (currentHour >= 9 && currentHour < 13) { 
+        // 9 AM to 1 PM
+        min = 5; max = 8;
+    } else {
+        // Gap fallback transition buffers
+        if (currentHour === 8) { min = 3; max = 5; }
+        else if (currentHour === 13) { min = 6; max = 8; }
+        else if (currentHour === 20) { min = 5; max = 8; }
+    }
+
+    const activeUsers = min === max ? min : Math.floor(Math.random() * (max - min + 1)) + min; 
+    
+    // Smoothly hide ticker instantly at zero threshold configurations
+    if (activeUsers === 0) {
+        ticker.classList.remove('visible');
+        return;
+    }
+
+    ticker.innerHTML = `<span class="live-dot"></span> <b>${activeUsers} people are online</b>`;
+    
+    setTimeout(() => {
+        ticker.classList.add('visible');
+    }, 100);
+}
+
+/* Toggle sorting algorithm and reload active feed elements */
+function changeFeedSorting(mode) {
+    if (currentSortEngine === mode) return;
+    currentSortEngine = mode;
+    
+    document.getElementById('btnSortLatest').classList.toggle('active', mode === 'latest');
+    document.getElementById('btnSortHot').classList.toggle('active', mode === 'hot');
+    
+    loadFeed();
+}
   
 /* feed */  
 async function loadFeed(){  
+    const ticker = document.getElementById('fomoTicker');
+    if (ticker) ticker.classList.remove('visible');
+
     feedList.innerHTML = "<p style='text-align:center'>Loading...</p>";  
   
     if(!supabaseClient){  
         supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
     }  
   
-    const {data}=await supabaseClient  
-        .from('confessions')  
-        .select("*")  
-        .order('id',{ascending:false});  
-  
+    // Dynamic Query Sorting execution based on active engine setup
+    let query = supabaseClient.from('confessions').select("*");
+    if (currentSortEngine === 'hot') {
+        query = query.order('likes', {ascending:false});
+    } else {
+        query = query.order('id', {ascending:false});
+    }
+
+    const {data}=await query;  
     feedList.innerHTML="";  
   
-    const likedIds = getLikedConfessions();
+    // Retrieve isolated lists of structural reactions
+    const loveIds = getReactedIds('love');
+    const fireIds = getReactedIds('fire');
+    const laughIds = getReactedIds('laugh');
 
     data.forEach(item=>{  
         const div=document.createElement('div');  
         div.className="feed-item";  
   
         let name = item.name===localStorage.getItem('sb_name') ? "You" : "Anonymous";  
-        let likesCount = item.likes || 0;
-        let isLiked = likedIds.includes(item.id);
+        
+        let isLove = loveIds.includes(item.id);
+        let isFire = fireIds.includes(item.id);
+        let isLaugh = laughIds.includes(item.id);
 
-        let heartHtml = isLiked ? 
-            `<span class="like-btn" id="like-btn-${item.id}" onclick="toggleLike(${item.id})">❤️</span>` : 
-            `<span class="like-btn" id="like-btn-${item.id}" onclick="toggleLike(${item.id})">🤍</span>`;
+        let loveEmoji = isLove ? "❤️" : "🤍";
+        let fireStyle = isFire ? "opacity: 1; filter: drop-shadow(0 0 3px #ff9800);" : "opacity: 0.35;";
+        let laughStyle = isLaugh ? "opacity: 1; filter: drop-shadow(0 0 3px #e91e63);" : "opacity: 0.35;";
 
         div.innerHTML = `<b>${name}</b> (${item.class})<br>${item.message}
             <div class="like-container">
-                ${heartHtml}
-                <span id="like-count-${item.id}">${likesCount}</span>
+                <div class="react-item" onclick="toggleReaction(${item.id}, 'love')">
+                    <span class="react-btn" id="btn-love-${item.id}">${loveEmoji}</span>
+                    <span id="count-love-${item.id}">${item.likes || 0}</span>
+                </div>
+                <div class="react-item" onclick="toggleReaction(${item.id}, 'fire')">
+                    <span class="react-btn" id="btn-fire-${item.id}" style="${fireStyle}">🔥</span>
+                    <span id="count-fire-${item.id}">${item.react_fire || 0}</span>
+                </div>
+                <div class="react-item" onclick="toggleReaction(${item.id}, 'laugh')">
+                    <span class="react-btn" id="btn-laugh-${item.id}" style="${laughStyle}">💀</span>
+                    <span id="count-laugh-${item.id}">${item.react_laugh || 0}</span>
+                </div>
             </div>`;  
         feedList.appendChild(div);  
     });  
+
+    updateFomoTicker();
 }  
 
-/* Like handlers */
-function getLikedConfessions() {
+/* Multi-Emoji Dynamic Storage Parsers */
+function getReactedIds(type) {
+    // Preserves and migrates legacy "sb_liked_confessions" mapping keys to love category gracefully
+    let storageKey = type === 'love' ? 'sb_liked_confessions' : `sb_react_${type}`;
     try {
-        return JSON.parse(localStorage.getItem('sb_liked_confessions')) || [];
+        return JSON.parse(localStorage.getItem(storageKey)) || [];
     } catch(e) {
         return [];
     }
 }
 
-async function toggleLike(id) {
-    let liked = getLikedConfessions();
-    const btn = document.getElementById(`like-btn-${id}`);
-    const countSpan = document.getElementById(`like-count-${id}`);
+async function toggleReaction(id, type) {
+    let storageKey = type === 'love' ? 'sb_liked_confessions' : `sb_react_${type}`;
+    let dbColumn = type === 'love' ? 'likes' : (type === 'fire' ? 'react_fire' : 'react_laugh');
+    
+    let activeIds = getReactedIds(type);
+    const btn = document.getElementById(`btn-${type}-${id}`);
+    const countSpan = document.getElementById(`count-${type}-${id}`);
     
     if (!btn || !countSpan) return;
 
-    let currentLikes = parseInt(countSpan.innerText) || 0;
-    let isCurrentlyLiked = liked.includes(id);
-    let newLikesCount = currentLikes;
+    let currentCount = parseInt(countSpan.innerText) || 0;
+    let hasReacted = activeIds.includes(id);
+    let newCount = currentCount;
 
-    if (isCurrentlyLiked) {
-        // Cancel Like (Unlike)
-        liked = liked.filter(likedId => likedId !== id);
-        newLikesCount = Math.max(0, currentLikes - 1);
-        btn.innerHTML = "🤍";
+    if (hasReacted) {
+        activeIds = activeIds.filter(activeId => activeId !== id);
+        newCount = Math.max(0, currentCount - 1);
+        
+        if (type === 'love') btn.innerHTML = "🤍";
+        else btn.style.opacity = "0.35";
     } else {
-        // Add Like
-        liked.push(id);
-        newLikesCount = currentLikes + 1;
-        btn.innerHTML = "❤️";
+        activeIds.push(id);
+        newCount = currentCount + 1;
+        
+        if (type === 'love') btn.innerHTML = "❤️";
+        else {
+            btn.style.opacity = "1";
+            btn.style.filter = type === 'fire' ? "drop-shadow(0 0 3px #ff9800)" : "drop-shadow(0 0 3px #e91e63)";
+        }
     }
 
-    // Update Local Storage immediately for local interface state
-    localStorage.setItem('sb_liked_confessions', JSON.stringify(liked));
-    countSpan.innerText = newLikesCount;
+    localStorage.setItem(storageKey, JSON.stringify(activeIds));
+    countSpan.innerText = newCount;
 
     if(!supabaseClient){  
         supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
     }  
 
-    // Update the record remotely inside Supabase Database
+    let updateData = {};
+    updateData[dbColumn] = newCount;
+
     await supabaseClient
         .from('confessions')
-        .update({ likes: newLikesCount })
+        .update(updateData)
         .eq('id', id);
 }
 </script>  </body>  
