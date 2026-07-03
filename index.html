@@ -1,8 +1,11 @@
-<!DOCTYPE html>  <html lang="en">  
+<!DOCTYPE html>  
+<html lang="en">  
 <head>  
 <meta charset="UTF-8">  
 <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Confession Box</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>  
+<title>Confession Box</title>  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
+<style>  
 :root {  
     --primary:#ff4b5c;  
     --bg:linear-gradient(135deg,#fff5f6,#ffe3e6);  
@@ -16,6 +19,7 @@ body {
     justify-content:center;  
     align-items:center;  
     height:100vh;  
+    overflow: hidden;
 }  
   
 .card {  
@@ -27,16 +31,19 @@ body {
     max-width:380px;  
     text-align:center;  
     box-shadow:0 10px 30px rgba(0,0,0,0.1);  
+    box-sizing: border-box;
 }  
   
 .fullscreen {  
     position:fixed;  
     top:0;  
     left:0;  
-    width:100%;  
-    height:100%;  
-    max-width:none;  
-    border-radius:0;  
+    width:100% !important;  
+    height:100% !important;  
+    max-width:none !important;  
+    border-radius:0 !important;  
+    padding:0 !important;  
+    margin:0 !important;  
     z-index:5;  
     overflow:hidden;  
 }  
@@ -48,6 +55,7 @@ input,select {
     border-radius:10px;  
     border:1px solid #ffc4cb;  
     outline:none;  
+    box-sizing: border-box;
 }  
   
 textarea {  
@@ -60,6 +68,7 @@ textarea {
     height:120px;  
     resize:none;  
     font-size:16px;  
+    box-sizing: border-box;
 }  
   
 textarea::placeholder {  
@@ -76,6 +85,7 @@ button {
     border-radius:10px;  
     font-weight:bold;  
     cursor:pointer;  
+    box-sizing: border-box;
 }  
   
 .tabs {  
@@ -95,121 +105,39 @@ button {
     text-align:center;  
     font-size:12px;  
     cursor:pointer;  
+    flex: 1;
 }  
 .active { color:var(--primary); font-weight:bold; }  
   
-.feed {  
-    height:calc(100vh - 160px);  
-    overflow-y:auto;  
-    text-align:left;  
-    padding:10px;  
-    padding-bottom:100px;  
-    box-sizing:border-box;  
-}  
-  
-.feed-item {  
-    background:#fff;  
-    padding:12px;  
-    margin:10px 0;  
-    border-radius:12px;  
-    width:100%;  
-    box-sizing:border-box;  
-  
-    word-break:break-word;  
-    overflow-wrap:anywhere;  
-    white-space:pre-wrap;  
-}  
-  
 .hidden { display:none; }  
 
-/* Feed Sorting Filter Control Styles */
-.feed-toggle {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin: 4px 10px 10px 10px;
-    background: rgba(255, 255, 255, 0.6);
-    padding: 4px;
-    border-radius: 30px;
-}
-
-.feed-toggle .toggle-btn {
-    flex: 1;
-    background: transparent;
-    color: #666;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.feed-toggle .toggle-btn.active {
-    background: var(--primary);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(255, 75, 92, 0.3);
-}
-
-/* Multi-Emoji Interaction Tray Setup */
-.like-container {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 10px;
-    font-size: 13px;
-    color: #555;
-    background: #fff5f6;
-    padding: 5px 12px;
-    border-radius: 20px;
-    width: fit-content;
-}
-
-.react-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.react-btn {
-    font-size: 17px;
-    display: inline-block;
-    transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
-}
-
-.react-btn:active {
-    transform: scale(1.35);
-}
-
-/* Smooth Spring Popup Ticker Design */
+/* Spring Popup Ticker Design (Optimized for New Post View flow) */
 .fomo-ticker {
     font-size: 13px;
     color: #e91e63;
     text-align: center;
     background: #fff;
-    border-radius: 10px;
+    border-radius: 20px;
     box-shadow: 0 4px 15px rgba(255, 75, 92, 0.1);
+    border: 1px solid #ffe3e6;
     
-    /* Initial Unloaded State */
+    /* Transition base configurations */
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.8);
     max-height: 0;
     padding: 0;
-    margin: 0;
+    margin: 0 auto;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: fit-content;
 }
 
-/* Loaded Spring State Triggered via JavaScript */
 .fomo-ticker.visible {
     opacity: 1;
     transform: scale(1);
     max-height: 50px;
-    padding: 8px;
-    margin: -5px 10px 12px 10px;
+    padding: 6px 16px;
+    margin: 10px auto 15px auto;
 }
 
 @keyframes pulseDot {
@@ -227,7 +155,118 @@ button {
     margin-right: 5px;
     animation: pulseDot 1.8s infinite ease-in-out;
 }
-</style>  </head>  <body>  <div class="card">  <div id="registerView">  
+
+/* 🎬 ADDICTIVE SCROLL-SNAP NATIVE VERTICAL REELS ENGINE */
+.reels-container {
+    width: 100%;
+    height: 100vh;
+    background: #0f0c20;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    box-sizing: border-box;
+    scrollbar-width: none; /* Hide Firefox scrollbars */
+}
+
+.reels-container::-webkit-scrollbar {
+    display: none; /* Hide Chrome/Safari scrollbars */
+}
+
+.reel-slide {
+    width: 100%;
+    height: 100vh;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    box-sizing: border-box;
+    padding: 24px;
+    padding-bottom: 110px; /* Preserve whitespace cushion for navigation bar */
+}
+
+.reel-card {
+    width: 100%;
+    max-width: 330px;
+    text-align: center;
+    color: white;
+    z-index: 10;
+}
+
+.reel-meta {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 15px;
+}
+
+.reel-text {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.45;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* Floating Vertical Tray Control Trackers */
+.reels-sidebar {
+    position: absolute;
+    right: 16px;
+    bottom: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 14px 10px;
+    border-radius: 30px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.reel-side-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reel-side-icon {
+    font-size: 26px;
+    transition: transform 0.1s ease;
+}
+
+.reel-side-icon:active {
+    transform: scale(1.3);
+}
+
+/* Dark variant configurations shifting tab navigation appearance inside reels view */
+.tabs.reels-darkmode {
+    background: rgba(15, 12, 32, 0.9) !important;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.tabs.reels-darkmode .tab {
+    color: rgba(255, 255, 255, 0.4);
+}
+.tabs.reels-darkmode .tab.active {
+    color: var(--primary);
+}
+</style>  
+</head>  
+<body>  
+<div class="card">  
+<div id="registerView">  
     <h2>Create Profile</h2>  
     <input id="username" placeholder="Your Name">  
     <input id="userclass" placeholder="Class / Section">  
@@ -237,17 +276,20 @@ button {
         <option>Female</option>  
     </select>  
     <button onclick="saveProfile()">Create Profile</button>  
-</div>  <div id="confessionView" class="hidden">  
+</div>  
+<div id="confessionView" class="hidden">  
     <h2>Express Your Feelings ❤️</h2>  
-    <textarea id="confessionMessage"  
-    placeholder="Write your secret confession here..."></textarea>  <button id="sendBtn" onclick="sendConfession()">Send Confession 🚀</button>  
-<p id="sendLabel"></p>
-
-</div>  <div id="profileView" class="hidden">  
+    <div id="fomoTicker" class="fomo-ticker"></div>
+    <textarea id="confessionMessage" placeholder="Write your secret confession here..."></textarea>  
+    <button id="sendBtn" onclick="sendConfession()">Send Confession 🚀</button>  
+    <p id="sendLabel"></p>
+</div>  
+<div id="profileView" class="hidden">  
     <h2>Your Profile</h2>  
     <p id="profileInfo"></p>  
     <button onclick="showEdit()">Edit</button>  
-</div>  <div id="editView" class="hidden">  
+</div>  
+<div id="editView" class="hidden">  
     <h2>Edit Profile</h2>  
     <input id="editName">  
     <input id="editClass">  
@@ -256,111 +298,145 @@ button {
         <option>Female</option>  
     </select>  
     <button onclick="updateProfile()">Save</button>  
-</div>  <div id="feedView" class="hidden">  
-    <h2>Confession Feed 🌐</h2>  
-    <div id="fomoTicker" class="fomo-ticker"></div>
-    
-    <div class="feed-toggle">
-        <button id="btnSortLatest" class="toggle-btn active" onclick="changeFeedSorting('latest')">⏰ Latest</button>
-        <button id="btnSortHot" class="toggle-btn" onclick="changeFeedSorting('hot')">🔥 Hot</button>
-    </div>
+</div>  
 
-    <div class="feed" id="feedList"></div>  
-</div>  </div>  <div class="tabs hidden" id="tabs">  
+<div id="reelsView" class="hidden">
+    <div class="reels-container" id="reelsContainer"></div>
+</div>
+
+</div>  
+
+<div class="tabs hidden" id="tabs">  
     <div class="tab" onclick="showTab('profile')">👤<br>You</div>  
     <div class="tab active" onclick="showTab('confession')">➕<br>New</div>  
-    <div class="tab" onclick="showTab('feed')">🌐<br>Feed</div>  
-</div>  <script>  
+    <div class="tab" onclick="showTab('reels')">🎬<br>Feeds</div>  
+</div>  
+
+<script>  
 const SUPABASE_URL="https://gsckseffapurzqkexeup.supabase.co";  
 const SUPABASE_ANON_KEY="sb_publishable_JWdBSaFEpNjTuKEHTcno5w_9hKO5Eu7";  
   
 let supabaseClient;  
-let currentSortEngine = 'latest';
+
+// High-contrast deep space gradient shifts for content backgrounds
+const aestheticBackdropPalettes = [
+    "linear-gradient(135deg, #0f0c20, #150019, #2b001d)",
+    "linear-gradient(135deg, #0d1b2a, #1b263b, #415a77)",
+    "linear-gradient(135deg, #1a051d, #03001e, #7303c0)",
+    "linear-gradient(135deg, #111111, #461616, #1c0505)",
+    "linear-gradient(135deg, #051923, #003566, #00669b)",
+    "linear-gradient(135deg, #141e30, #243b55)",
+    "linear-gradient(135deg, #2c3e50, #000000)"
+];
+
+// Target Elements
+const viewRegister = document.getElementById('registerView');
+const viewConfession = document.getElementById('confessionView');
+const viewProfile = document.getElementById('profileView');
+const viewEdit = document.getElementById('editView');
+const viewReels = document.getElementById('reelsView');
+const navigationTabs = document.getElementById('tabs');
+
+const inputUsername = document.getElementById('username');
+const inputUserclass = document.getElementById('userclass');
+const selectUsergender = document.getElementById('usergender');
+
+const inputEditName = document.getElementById('editName');
+const inputEditClass = document.getElementById('editClass');
+const selectEditGender = document.getElementById('editGender');
+
+const labelProfileInfo = document.getElementById('profileInfo');
+const txtConfessionMessage = document.getElementById('confessionMessage');
+const labelSendLabel = document.getElementById('sendLabel');
   
+// Boot State Controller Action Verification Logic
 window.onload=()=>{  
     if(localStorage.getItem('sb_name')){  
-        registerView.classList.add('hidden');  
-        tabs.classList.remove('hidden');  
+        viewRegister.classList.add('hidden');  
+        navigationTabs.classList.remove('hidden');  
         showTab('confession');  
     }  
 };  
   
-/* profile */  
+/* Profile processing workflows */  
 function saveProfile(){  
-    if(!username.value || !userclass.value || usergender.selectedIndex===0){  
+    if(!inputUsername.value || !inputUserclass.value || selectUsergender.selectedIndex===0){  
         alert("Fill all fields");  
         return;  
     }  
   
-    localStorage.setItem('sb_name',username.value);  
-    localStorage.setItem('sb_class',userclass.value);  
-    localStorage.setItem('sb_gender',usergender.value);  
+    localStorage.setItem('sb_name', inputUsername.value);  
+    localStorage.setItem('sb_class', inputUserclass.value);  
+    localStorage.setItem('sb_gender', selectUsergender.value);  
   
-    registerView.classList.add('hidden');  
-    tabs.classList.remove('hidden');  
+    viewRegister.classList.add('hidden');  
+    navigationTabs.classList.remove('hidden');  
     showTab('confession');  
 }  
   
 function loadProfile(){  
-    profileInfo.innerText =  
+    labelProfileInfo.innerText =  
     `Name: ${localStorage.getItem('sb_name')}  
 Class: ${localStorage.getItem('sb_class')}  
 Gender: ${localStorage.getItem('sb_gender')}`;  
 }  
   
-/* edit */  
+/* Edit parameters mapping configurations */  
 function showEdit(){  
-    profileView.classList.add('hidden');  
-    editView.classList.remove('hidden');  
+    viewProfile.classList.add('hidden');  
+    viewEdit.classList.remove('hidden');  
   
-    editName.value=localStorage.getItem('sb_name');  
-    editClass.value=localStorage.getItem('sb_class');  
-    editGender.value=localStorage.getItem('sb_gender');  
+    inputEditName.value=localStorage.getItem('sb_name');  
+    inputEditClass.value=localStorage.getItem('sb_class');  
+    selectEditGender.value=localStorage.getItem('sb_gender');  
 }  
   
 function updateProfile(){  
-    localStorage.setItem('sb_name',editName.value);  
-    localStorage.setItem('sb_class',editClass.value);  
-    localStorage.setItem('sb_gender',editGender.value);  
+    localStorage.setItem('sb_name', inputEditName.value);  
+    localStorage.setItem('sb_class', inputEditClass.value);  
+    localStorage.setItem('sb_gender', selectEditGender.value);  
   
-    editView.classList.add('hidden');  
-    profileView.classList.remove('hidden');  
+    viewEdit.classList.add('hidden');  
+    viewProfile.classList.remove('hidden');  
     loadProfile();  
 }  
   
-/* tabs */  
+/* Router system view navigation engine switcher */  
 function showTab(tab){  
-    confessionView.classList.add('hidden');  
-    profileView.classList.add('hidden');  
-    editView.classList.add('hidden');  
-    feedView.classList.add('hidden');  
+    viewConfession.classList.add('hidden');  
+    viewProfile.classList.add('hidden');  
+    viewEdit.classList.add('hidden');  
+    viewReels.classList.add('hidden');
   
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));  
-    document.querySelector('.card').classList.remove('fullscreen');  
-  
-    if(tab==='confession'){  
-        confessionView.classList.remove('hidden');  
-        document.querySelectorAll('.tab')[1].classList.add('active');  
-    }  
-  
+    const mainCard = document.querySelector('.card');
+    
+    mainCard.classList.remove('fullscreen');  
+    navigationTabs.classList.remove('reels-darkmode');
+
     if(tab==='profile'){  
-        profileView.classList.remove('hidden');  
+        viewProfile.classList.remove('hidden');  
         loadProfile();  
         document.querySelectorAll('.tab')[0].classList.add('active');  
     }  
-  
-    if(tab==='feed'){  
-        feedView.classList.remove('hidden');  
-        document.querySelector('.card').classList.add('fullscreen');  
-        loadFeed();  
-        document.querySelectorAll('.tab')[2].classList.add('active');  
+    if(tab==='confession'){  
+        viewConfession.classList.remove('hidden');  
+        updateFomoTicker();
+        document.querySelectorAll('.tab')[1].classList.add('active');  
     }  
+    if(tab==='reels'){
+        viewReels.classList.remove('hidden');
+        mainCard.classList.add('fullscreen');
+        navigationTabs.classList.add('reels-darkmode');
+        document.querySelectorAll('.tab')[2].classList.add('active');
+        initiateReelsEngine();
+    }
 }  
   
-/* 🔥 WORD FILTER BACK */  
+/* Word filter validation parsing engine layout rules */  
 async function sendConfession(){  
-    const msg=confessionMessage.value.trim();  
-    const label=sendLabel;  
+    const msg=txtConfessionMessage.value.trim();  
+    const label=labelSendLabel;  
     const btn=document.getElementById("sendBtn");  
   
     const banned=["fuck","ass","randi","chod","chut","lund","gand","sex","bitch","slut"];  
@@ -402,130 +478,127 @@ async function sendConfession(){
     } else {  
         label.style.color="green";  
         label.innerText="Sent";  
-        confessionMessage.value="";  
+        txtConfessionMessage.value="";  
     }  
 }  
 
-/* Pop Up FOMO Hook Trigger with Smart Time-of-Day Ranges */
+/* Live online activity mock logic calculations */
 function updateFomoTicker() {
     const ticker = document.getElementById('fomoTicker');
     if (!ticker) return;
 
-    const currentHour = new Date().getHours();
-    let min = 0;
-    let max = 0;
+    ticker.classList.remove('visible');
 
-    // Strict time validation algorithms requested
-    if (currentHour >= 14 && currentHour < 20) { 
-        // 2 PM to 8 PM
-        min = 9; max = 16;
-    } else if (currentHour >= 21 && currentHour < 22) { 
-        // 9 PM to 10 PM
-        min = 3; max = 4;
-    } else if (currentHour >= 22 || currentHour < 8) { 
-        // 10 PM to 8 AM
-        min = 0; max = 0;
-    } else if (currentHour >= 9 && currentHour < 13) { 
-        // 9 AM to 1 PM
-        min = 5; max = 8;
-    } else {
-        // Gap fallback transition buffers
-        if (currentHour === 8) { min = 3; max = 5; }
-        else if (currentHour === 13) { min = 6; max = 8; }
-        else if (currentHour === 20) { min = 5; max = 8; }
+    const currentHour = new Date().getHours();
+    let min = 0, max = 0;
+
+    if (currentHour >= 14 && currentHour < 20) { min = 9; max = 16; } 
+    else if (currentHour >= 21 && currentHour < 22) { min = 3; max = 4; } 
+    else if (currentHour >= 22 || currentHour < 8) { min = 0; max = 0; } 
+    else if (currentHour >= 9 && currentHour < 13) { min = 5; max = 8; } 
+    else {
+        if (currentHour === 8 || currentHour === 20) { min = 3; max = 5; }
+        else { min = 6; max = 8; }
     }
 
     const activeUsers = min === max ? min : Math.floor(Math.random() * (max - min + 1)) + min; 
     
-    // Smoothly hide ticker instantly at zero threshold configurations
-    if (activeUsers === 0) {
-        ticker.classList.remove('visible');
-        return;
-    }
+    if (activeUsers === 0) return;
 
     ticker.innerHTML = `<span class="live-dot"></span> <b>${activeUsers} people are online</b>`;
     
     setTimeout(() => {
         ticker.classList.add('visible');
-    }, 100);
+    }, 150);
 }
 
-/* Toggle sorting algorithm and reload active feed elements */
-function changeFeedSorting(mode) {
-    if (currentSortEngine === mode) return;
-    currentSortEngine = mode;
-    
-    document.getElementById('btnSortLatest').classList.toggle('active', mode === 'latest');
-    document.getElementById('btnSortHot').classList.toggle('active', mode === 'hot');
-    
-    loadFeed();
-}
-  
-/* feed */  
-async function loadFeed(){  
-    const ticker = document.getElementById('fomoTicker');
-    if (ticker) ticker.classList.remove('visible');
+/* 🎬 MULTI-PAGE SNAP REELS COMPILER */
+async function initiateReelsEngine() {
+    const container = document.getElementById('reelsContainer');
+    container.innerHTML = "<p style='color:rgba(255,255,255,0.6); text-align:center; padding-top:45vh;'>Preparing Secrets Feed...</p>";
 
-    feedList.innerHTML = "<p style='text-align:center'>Loading...</p>";  
-  
     if(!supabaseClient){  
         supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
-    }  
-  
-    // Dynamic Query Sorting execution based on active engine setup
-    let query = supabaseClient.from('confessions').select("*");
-    if (currentSortEngine === 'hot') {
-        query = query.order('likes', {ascending:false});
-    } else {
-        query = query.order('id', {ascending:false});
     }
 
-    const {data}=await query;  
-    feedList.innerHTML="";  
-  
-    // Retrieve isolated lists of structural reactions
+    const {data, error} = await supabaseClient
+        .from('confessions')
+        .select('*')
+        .order('id', {ascending: false});
+
+    if (error || !data || data.length === 0) {
+        container.innerHTML = "<p style='color:white; text-align:center; padding-top:45vh;'>No secrets discovered inside the database pool yet.</p>";
+        return;
+    }
+
+    // Shuffle data pool to deliver unpredictable content layout sequences
+    const shuffledReels = data.sort(() => Math.random() - 0.5);
+    container.innerHTML = "";
+
     const loveIds = getReactedIds('love');
     const fireIds = getReactedIds('fire');
     const laughIds = getReactedIds('laugh');
 
-    data.forEach(item=>{  
-        const div=document.createElement('div');  
-        div.className="feed-item";  
-  
-        let name = item.name===localStorage.getItem('sb_name') ? "You" : "Anonymous";  
+    shuffledReels.forEach((item, index) => {
+        const gradientIndex = index % aestheticBackdropPalettes.length;
+        const currentBackground = aestheticBackdropPalettes[gradientIndex];
+
+        let profileTag = item.name === localStorage.getItem('sb_name') ? "YOU" : "ANONYMOUS";
         
         let isLove = loveIds.includes(item.id);
         let isFire = fireIds.includes(item.id);
         let isLaugh = laughIds.includes(item.id);
 
-        let loveEmoji = isLove ? "❤️" : "🤍";
-        let fireStyle = isFire ? "opacity: 1; filter: drop-shadow(0 0 3px #ff9800);" : "opacity: 0.35;";
-        let laughStyle = isLaugh ? "opacity: 1; filter: drop-shadow(0 0 3px #e91e63);" : "opacity: 0.35;";
+        let loveIcon = isLove ? "❤️" : "🤍";
+        let fireOpacity = isFire ? "opacity: 1;" : "opacity: 0.4;";
+        let laughOpacity = isLaugh ? "opacity: 1;" : "opacity: 0.4;";
 
-        div.innerHTML = `<b>${name}</b> (${item.class})<br>${item.message}
-            <div class="like-container">
-                <div class="react-item" onclick="toggleReaction(${item.id}, 'love')">
-                    <span class="react-btn" id="btn-love-${item.id}">${loveEmoji}</span>
-                    <span id="count-love-${item.id}">${item.likes || 0}</span>
-                </div>
-                <div class="react-item" onclick="toggleReaction(${item.id}, 'fire')">
-                    <span class="react-btn" id="btn-fire-${item.id}" style="${fireStyle}">🔥</span>
-                    <span id="count-fire-${item.id}">${item.react_fire || 0}</span>
-                </div>
-                <div class="react-item" onclick="toggleReaction(${item.id}, 'laugh')">
-                    <span class="react-btn" id="btn-laugh-${item.id}" style="${laughStyle}">💀</span>
-                    <span id="count-laugh-${item.id}">${item.react_laugh || 0}</span>
-                </div>
-            </div>`;  
-        feedList.appendChild(div);  
-    });  
+        const slide = document.createElement('div');
+        slide.className = 'reel-slide';
+        slide.style.background = currentBackground;
 
-    updateFomoTicker();
-}  
+        slide.innerHTML = `
+            <div class="reel-card">
+                <div class="reel-meta">🤫 From Class ${item.class} (${profileTag})</div>
+                <div class="reel-text">${item.message}</div>
+            </div>
+            <div class="reels-sidebar">
+                <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'love')">
+                    <span class="reel-side-icon" id="reel-love-btn-${item.id}">${loveIcon}</span>
+                    <span id="reel-love-count-${item.id}">${item.likes || 0}</span>
+                </div>
+                <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'fire')">
+                    <span class="reel-side-icon" id="reel-fire-btn-${item.id}" style="${fireOpacity}">🔥</span>
+                    <span id="reel-fire-count-${item.id}">${item.react_fire || 0}</span>
+                </div>
+                <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'laugh')">
+                    <span class="reel-side-icon" id="reel-laugh-btn-${item.id}" style="${laughOpacity}">💀</span>
+                    <span id="reel-laugh-count-${item.id}">${item.react_laugh || 0}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(slide);
+    });
+}
 
-/* Multi-Emoji Dynamic Storage Parsers */
+/* Local reaction process interfaces running dynamic database pipelines */
+async function executeReelReaction(id, type) {
+    await toggleReaction(id, type);
+
+    const loveIds = getReactedIds('love');
+    const fireIds = getReactedIds('fire');
+    const laughIds = getReactedIds('laugh');
+
+    const loveBtn = document.getElementById(`reel-love-btn-${id}`);
+    const fireBtn = document.getElementById(`reel-fire-btn-${id}`);
+    const laughBtn = document.getElementById(`reel-laugh-btn-${id}`);
+
+    if(type === 'love' && loveBtn) loveBtn.innerHTML = loveIds.includes(id) ? "❤️" : "🤍";
+    if(type === 'fire' && fireBtn) fireBtn.style.opacity = fireIds.includes(id) ? "1" : "0.4";
+    if(type === 'laugh' && laughBtn) laughBtn.style.opacity = laughIds.includes(id) ? "1" : "0.4";
+}
+
 function getReactedIds(type) {
-    // Preserves and migrates legacy "sb_liked_confessions" mapping keys to love category gracefully
     let storageKey = type === 'love' ? 'sb_liked_confessions' : `sb_react_${type}`;
     try {
         return JSON.parse(localStorage.getItem(storageKey)) || [];
@@ -539,34 +612,22 @@ async function toggleReaction(id, type) {
     let dbColumn = type === 'love' ? 'likes' : (type === 'fire' ? 'react_fire' : 'react_laugh');
     
     let activeIds = getReactedIds(type);
-    const btn = document.getElementById(`btn-${type}-${id}`);
-    const countSpan = document.getElementById(`count-${type}-${id}`);
+    const countSpan = document.getElementById(`reel-${type}-count-${id}`);
+    let currentCount = countSpan ? (parseInt(countSpan.innerText) || 0) : 0;
     
-    if (!btn || !countSpan) return;
-
-    let currentCount = parseInt(countSpan.innerText) || 0;
     let hasReacted = activeIds.includes(id);
     let newCount = currentCount;
 
     if (hasReacted) {
         activeIds = activeIds.filter(activeId => activeId !== id);
         newCount = Math.max(0, currentCount - 1);
-        
-        if (type === 'love') btn.innerHTML = "🤍";
-        else btn.style.opacity = "0.35";
     } else {
         activeIds.push(id);
         newCount = currentCount + 1;
-        
-        if (type === 'love') btn.innerHTML = "❤️";
-        else {
-            btn.style.opacity = "1";
-            btn.style.filter = type === 'fire' ? "drop-shadow(0 0 3px #ff9800)" : "drop-shadow(0 0 3px #e91e63)";
-        }
     }
 
     localStorage.setItem(storageKey, JSON.stringify(activeIds));
-    countSpan.innerText = newCount;
+    if(countSpan) countSpan.innerText = newCount;
 
     if(!supabaseClient){  
         supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
@@ -580,5 +641,6 @@ async function toggleReaction(id, type) {
         .update(updateData)
         .eq('id', id);
 }
-</script>  </body>  
+</script>  
+</body>  
 </html>
