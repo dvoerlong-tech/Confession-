@@ -288,6 +288,9 @@ button {
     <h2>Your Profile</h2>  
     <p id="profileInfo"></p>  
     <button onclick="showEdit()">Edit</button>  
+    <hr style="border:0; border-top:1px solid #ffc4cb; margin:15px 0;">
+    <h3 style="color:var(--primary); font-size:16px; margin:10px 0;">Your Uploads</h3>
+    <div id="myConfessionsList" style="max-height:160px; overflow-y:auto; text-align:left; padding:2px;"></div>
 </div>  
 <div id="editView" class="hidden">  
     <h2>Edit Profile</h2>  
@@ -359,6 +362,94 @@ window.onload=()=>{
 };  
   
 /* Profile processing workflows */  
+async function loadProfile(){  
+    labelProfileInfo.innerText =  
+    `Name: ${localStorage.getItem('sb_name')}  
+Class: ${localStorage.getItem('sb_class')}  
+Gender: ${localStorage.getItem('sb_gender')}`;  
+
+    const listContainer = document.getElementById('myConfessionsList');
+    if (!listContainer) return;
+    listContainer.innerHTML = "<p style='color:#777; text-align:center; font-size:13px;'>Loading your items...</p>";
+
+    if(!supabaseClient){  
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
+    }  
+
+    const {data, error} = await supabaseClient
+        .from('confessions')
+        .select('*')
+        .eq('name', localStorage.getItem('sb_name'))
+        .order('id', {ascending: false});
+
+    if (error || !data || data.length === 0) {
+        listContainer.innerHTML = "<p style='color:#777; text-align:center; font-size:13px;'>No confessions uploaded yet.</p>";
+        return;
+    }
+
+    listContainer.innerHTML = "";
+    data.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.style.background = "#fff";
+        itemDiv.style.padding = "10px";
+        itemDiv.style.margin = "6px 0";
+        itemDiv.style.borderRadius = "8px";
+        itemDiv.style.border = "1px solid #ffc4cb";
+        itemDiv.style.fontSize = "13px";
+        itemDiv.style.color = "#333";
+        itemDiv.style.display = "flex";
+        itemDiv.style.justifyContent = "space-between";
+        itemDiv.style.alignItems = "center";
+        itemDiv.style.boxSizing = "border-box";
+
+        const textSpan = document.createElement('span');
+        textSpan.style.cursor = "pointer";
+        textSpan.style.whiteSpace = "nowrap";
+        textSpan.style.overflow = "hidden";
+        textSpan.style.textOverflow = "ellipsis";
+        textSpan.style.flex = "1";
+        textSpan.innerText = item.message;
+        textSpan.onclick = () => showTab('reels', item.id);
+
+        const deleteBtn = document.createElement('span');
+        deleteBtn.innerHTML = "🗑️";
+        deleteBtn.style.cursor = "pointer";
+        deleteBtn.style.padding = "0 5px";
+        deleteBtn.style.marginLeft = "10px";
+        deleteBtn.style.color = "#ff4b5c";
+        deleteBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if(confirm("Are you sure you want to delete this confession?")) {
+                await deleteConfession(item.id, itemDiv);
+            }
+        };
+
+        itemDiv.appendChild(textSpan);
+        itemDiv.appendChild(deleteBtn);
+        listContainer.appendChild(itemDiv);
+    });
+}  
+
+async function deleteConfession(id, element) {
+    if(!supabaseClient){  
+        supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);  
+    }  
+    const { error } = await supabaseClient
+        .from('confessions')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        alert("Error deleting confession: " + error.message);
+    } else {
+        element.remove();
+        const listContainer = document.getElementById('myConfessionsList');
+        if (listContainer && listContainer.children.length === 0) {
+            listContainer.innerHTML = "<p style='color:#777; text-align:center; font-size:13px;'>No confessions uploaded yet.</p>";
+        }
+    }
+}
+
 function saveProfile(){  
     if(!inputUsername.value || !inputUserclass.value || selectUsergender.selectedIndex===0){  
         alert("Fill all fields");  
@@ -372,13 +463,6 @@ function saveProfile(){
     viewRegister.classList.add('hidden');  
     navigationTabs.classList.remove('hidden');  
     showTab('confession');  
-}  
-  
-function loadProfile(){  
-    labelProfileInfo.innerText =  
-    `Name: ${localStorage.getItem('sb_name')}  
-Class: ${localStorage.getItem('sb_class')}  
-Gender: ${localStorage.getItem('sb_gender')}`;  
 }  
   
 /* Edit parameters mapping configurations */  
@@ -402,7 +486,7 @@ function updateProfile(){
 }  
   
 /* Router system view navigation engine switcher */  
-function showTab(tab){  
+function showTab(tab, targetId = null){  
     viewConfession.classList.add('hidden');  
     viewProfile.classList.add('hidden');  
     viewEdit.classList.add('hidden');  
@@ -429,7 +513,7 @@ function showTab(tab){
         mainCard.classList.add('fullscreen');
         navigationTabs.classList.add('reels-darkmode');
         document.querySelectorAll('.tab')[2].classList.add('active');
-        initiateReelsEngine();
+        initiateReelsEngine(targetId);
     }
 }  
   
@@ -513,7 +597,7 @@ function updateFomoTicker() {
 }
 
 /* 🎬 MULTI-PAGE SNAP REELS COMPILER */
-async function initiateReelsEngine() {
+async function initiateReelsEngine(targetId = null) {
     const container = document.getElementById('reelsContainer');
     container.innerHTML = "<p style='color:rgba(255,255,255,0.6); text-align:center; padding-top:45vh;'>Preparing Secrets Feed...</p>";
 
@@ -555,6 +639,7 @@ async function initiateReelsEngine() {
 
         const slide = document.createElement('div');
         slide.className = 'reel-slide';
+        slide.id = `reel-slide-${item.id}`;
         slide.style.background = currentBackground;
 
         slide.innerHTML = `
@@ -565,31 +650,7 @@ async function initiateReelsEngine() {
             <div class="reels-sidebar">
                 <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'love')">
                     <span class="reel-side-icon" id="reel-love-btn-${item.id}">${loveIcon}</span>
-                    <span id="reel-love-count-${item.id}">${item.likes || 0}</span>
-                </div>
-                <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'fire')">
-                    <span class="reel-side-icon" id="reel-fire-btn-${item.id}" style="${fireOpacity}">🔥</span>
-                    <span id="reel-fire-count-${item.id}">${item.react_fire || 0}</span>
-                </div>
-                <div class="reel-side-item" onclick="executeReelReaction(${item.id}, 'laugh')">
-                    <span class="reel-side-icon" id="reel-laugh-btn-${item.id}" style="${laughOpacity}">💀</span>
-                    <span id="reel-laugh-count-${item.id}">${item.react_laugh || 0}</span>
-                </div>
-            </div>
-        `;
-        container.appendChild(slide);
-    });
-}
-
-/* Local reaction process interfaces running dynamic database pipelines */
-async function executeReelReaction(id, type) {
-    await toggleReaction(id, type);
-
-    const loveIds = getReactedIds('love');
-    const fireIds = getReactedIds('fire');
-    const laughIds = getReactedIds('laugh');
-
-    const loveBtn = document.getElementById(`reel-love-btn-${id}`);
+                    <span id="reel-love-btn-${id}`);
     const fireBtn = document.getElementById(`reel-fire-btn-${id}`);
     const laughBtn = document.getElementById(`reel-laugh-btn-${id}`);
 
